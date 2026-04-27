@@ -1,0 +1,26 @@
+{
+    "file version": "1.1",
+    "documents": [
+        {
+            "description": "Knoten X",
+            "id": 1,
+            "notes": [
+                "# Heading 1",
+                "textxdssc"
+            ]
+        },
+        {
+            "description": "Knoten YX",
+            "id": 2,
+            "notes": [
+                "# Heading 2",
+                "ein textyxxds"
+            ]
+        }
+    ],
+    "roots": [
+        1,
+        2
+    ],
+    "next id": 4
+}

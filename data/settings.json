@@ -1,0 +1,85 @@
+{
+    "DocumentNodeEditorDialog": {
+        "height": 156,
+        "width": 450,
+        "x": 725,
+        "y": 421
+    },
+    "EmojiPickerDialog": {
+        "height": 331,
+        "width": 582,
+        "x": 339,
+        "y": 196
+    },
+    "IconEditorDialog": {
+        "height": 276,
+        "width": 370,
+        "x": 765,
+        "y": 364
+    },
+    "IconManagerDialog": {
+        "height": 669,
+        "width": 664,
+        "x": 384,
+        "y": 53
+    },
+    "IconSelectorDialog": {
+        "height": 669,
+        "width": 684,
+        "x": 586,
+        "y": 53
+    },
+    "LinkEditorDialog": {
+        "height": 176,
+        "width": 549,
+        "x": 346,
+        "y": 265
+    },
+    "MainWindow": {
+        "height": 666,
+        "splitter sizes": [
+            273,
+            990
+        ],
+        "view heights": [
+            474,
+            175
+        ],
+        "width": 1280,
+        "x": 0,
+        "y": 53
+    },
+    "TreeNotesWindow": {
+        "height": 945,
+        "splitter sizes": [
+            300,
+            1603
+        ],
+        "view heights": [
+            628,
+            300
+        ],
+        "width": 1920,
+        "x": 0,
+        "y": 53
+    },
+    "file config": [
+        {
+            "filename": "/Users/albrecht/Documents/Projekte/notetree/test.json",
+            "recently opened": 2
+        },
+        {
+            "filename": "/Users/albrecht/Documents/Studien/hochsensibel.json",
+            "recently opened": 4
+        },
+        {
+            "filename": "/Users/albrecht/Documents/Studien/todoliste.json",
+            "recently opened": 45
+        }
+    ],
+    "recent files": [
+        "/Users/albrecht/Documents/Studien/todoliste.json",
+        "/Users/albrecht/Documents/Projekte/notetree/test.json",
+        "/Users/albrecht/Documents/Studien/hochsensibel.json"
+    ]
+}

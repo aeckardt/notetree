@@ -1,0 +1,176 @@
+[
+    {
+        "design": 1,
+        "index": 1,
+        "name": "Ordner",
+        "path": "fontawesome/folder-open-regular-16.png"
+    },
+    {
+        "design": 1,
+        "index": 2,
+        "name": "Dokument",
+        "path": "fontawesome/file-regular-16.png"
+    },
+    {
+        "design": 0,
+        "index": 3,
+        "name": "Dokument",
+        "path": "fugue/document-text.png"
+    },
+    {
+        "design": 0,
+        "index": 4,
+        "name": "Ordner",
+        "path": "fugue/folder-horizontal-open.png"
+    },
+    {
+        "design": 1,
+        "index": 5,
+        "name": "Fragezeichen",
+        "path": "fontawesome/question-16.png"
+    },
+    {
+        "design": 1,
+        "index": 7,
+        "name": "Ausrufezeichen",
+        "path": "fontawesome/exclamation-16.png"
+    },
+    {
+        "design": 0,
+        "index": 8,
+        "name": "Brieftasche",
+        "path": "fugue/briefcase.png"
+    },
+    {
+        "design": 0,
+        "index": 9,
+        "name": "Kalender ToDo",
+        "path": "fugue/calendar-task.png"
+    },
+    {
+        "design": 1,
+        "index": 10,
+        "name": "Bild",
+        "path": "fontawesome/image-16.png"
+    },
+    {
+        "design": 0,
+        "index": 11,
+        "name": "Glühbirne",
+        "path": "fugue/light-bulb-off.png"
+    },
+    {
+        "design": 0,
+        "index": 13,
+        "name": "Dokumente",
+        "path": "fugue/documents-stack.png"
+    },
+    {
+        "design": 0,
+        "index": 14,
+        "name": "Stern",
+        "path": "fugue/star.png"
+    },
+    {
+        "design": 0,
+        "index": 15,
+        "name": "Buch, offen",
+        "path": "fugue/book-open.png"
+    },
+    {
+        "design": 1,
+        "index": 16,
+        "name": "Caret rechts",
+        "path": "fontawesome/caret-right-16.png"
+    },
+    {
+        "design": 1,
+        "index": 17,
+        "name": "Check",
+        "path": "fontawesome/check-16.png"
+    },
+    {
+        "design": 0,
+        "index": 18,
+        "name": "Stift",
+        "path": "fugue/pencil.png"
+    },
+    {
+        "design": 0,
+        "index": 19,
+        "name": "Dokument mit Bild",
+        "path": "fugue/document-text-image.png"
+    },
+    {
+        "design": 0,
+        "index": 20,
+        "name": "Check",
+        "path": "fugue/tick.png"
+    },
+    {
+        "design": 0,
+        "index": 23,
+        "name": "Kreuz",
+        "path": "fugue/cross.png"
+    },
+    {
+        "design": 1,
+        "index": 24,
+        "name": "Kreuz",
+        "path": "fontawesome/xmark-16.png"
+    },
+    {
+        "design": 1,
+        "index": 25,
+        "name": "Stift",
+        "path": "fontawesome/pen-16.png"
+    },
+    {
+        "design": 0,
+        "index": 26,
+        "name": "Bild",
+        "path": "fugue/image.png"
+    },
+    {
+        "design": 1,
+        "index": 27,
+        "name": "Buch",
+        "path": "fontawesome/book-16.png"
+    },
+    {
+        "design": 0,
+        "index": 28,
+        "name": "Buch",
+        "path": "fugue/book.png"
+    },
+    {
+        "design": 0,
+        "index": 32,
+        "name": "Notizen",
+        "path": "fugue/sticky-notes-text.png"
+    },
+    {
+        "design": 0,
+        "index": 33,
+        "name": "Pin",
+        "path": "fugue/pin.png"
+    },
+    {
+        "design": 0,
+        "index": 34,
+        "name": "Pause",
+        "path": "fugue/control-pause.png"
+    },
+    {
+        "design": 0,
+        "index": 35,
+        "name": "Stop",
+        "path": "fugue/control-stop-square.png"
+    },
+    {
+        "design": 0,
+        "index": 36,
+        "name": "Weihnachtsmannmütze",
+        "path": "fugue/santa-hat.png"
+    }
+]
