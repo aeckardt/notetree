@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Optional, List
 
 from PyQt6.QtCore import (QModelIndex, QAbstractItemModel, QObject, pyqtSignal, Qt, QByteArray,
                           QDataStream, QIODevice, QMimeData)
@@ -14,16 +13,16 @@ class DocumentMetadata:
     """
 
     # The unique ID is used to identify the document
-    id: Optional[int] = None
+    id: int | None = None
 
     # Name and icon of the document are visible in the treeview
     name: str = ''
-    icon: Optional[str] = None
+    icon: str | None = None
 
     # Since documents are organized hierarchically in a tree,
     # they are also nodes (potentially) with a parent and children.
-    parent: Optional["DocumentMetadata"] = None
-    children: List["DocumentMetadata"] = field(default_factory=list)
+    parent: "DocumentMetadata | None" = None
+    children: list["DocumentMetadata"] = field(default_factory=list)
 
     # Expanded state of treeview node
     expanded: bool = True
@@ -59,13 +58,15 @@ MIME_TYPE = "application/x-document-id"
 
 class DocumentTreeModel(QAbstractItemModel):
     loaded = pyqtSignal()
-    changed = pyqtSignal()
+    inserted = pyqtSignal(DocumentMetadata)
+    removed = pyqtSignal(DocumentMetadata)
+    data_changed = pyqtSignal()
 
     # -----------------------------------------------
     # 1. Standard TreeModel handlers (add, remove, ...)
     # -----------------------------------------------
 
-    def __init__(self, parent: QObject = None):
+    def __init__(self, parent: QObject | None = None):
         QAbstractItemModel.__init__(self, parent)
 
         # Invisible root above top level nodes (= "roots")
@@ -94,7 +95,8 @@ class DocumentTreeModel(QAbstractItemModel):
         parent_item.children.append(item)
         self.endInsertRows()
 
-        self.changed.emit()
+        self.data_changed.emit()
+        self.inserted.emit(item)
 
     def columnCount(self, _):
         return 1
@@ -141,7 +143,7 @@ class DocumentTreeModel(QAbstractItemModel):
         else:
             self.super_root.swap(source_row, destination_child)
 
-        self.changed.emit()
+        self.data_changed.emit()
 
         return True
 
@@ -177,7 +179,8 @@ class DocumentTreeModel(QAbstractItemModel):
         parent_item.children.pop(row)
         self.endRemoveRows()
 
-        self.changed.emit()
+        self.data_changed.emit()
+        self.removed.emit(item)
 
     def rowCount(self, parent):
         if parent.column() > 0:
@@ -409,6 +412,8 @@ class DocumentTreeModel(QAbstractItemModel):
                 self.beginMoveRows(parent_index, src_row, src_row, parent_index, dst_row)
                 self.moveRow(parent_index, src_row, parent_index, dst_row)
                 self.endMoveRows()
+
+                self.data_changed.emit()
                 return True
 
         self.beginMoveRows(src_parent_index, src_row, src_row, parent_index, dst_row)
@@ -417,6 +422,7 @@ class DocumentTreeModel(QAbstractItemModel):
         src_item.parent = dst_parent
         self.endMoveRows()
 
+        self.data_changed.emit()
         return True
 
     # -----------------------------------------------

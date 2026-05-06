@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 import html
 
 from PyQt6.QtGui import (QTextDocument, QTextCursor, QTextBlock, QTextFormat)
@@ -10,7 +9,7 @@ from notetree.texteditor.style import style_module
 @dataclass
 class Tag:
     name: str
-    attrs: Optional[dict] = None
+    attrs: dict | None = None
 
 TagStack = list[Tag]
 

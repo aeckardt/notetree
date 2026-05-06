@@ -128,6 +128,13 @@ class OutlineModel(QAbstractItemModel):
 
         self.loaded.emit()
 
+    def clear(self):
+        self.beginResetModel()
+        self._root_item = OutlineItem()
+        self.endResetModel()
+
+        self.loaded.emit()
+
     def moveRow(self, source_parent, source_row, destination_parent, destination_child):
         if source_parent != destination_parent:
             return False

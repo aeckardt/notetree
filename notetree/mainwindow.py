@@ -1,7 +1,7 @@
 import pathlib
 
-from PyQt6.QtCore import (QMetaObject, Qt, QObject, QItemSelectionModel, QModelIndex, QCoreApplication,
-                          QFileInfo, pyqtSlot, pyqtSignal)
+from PyQt6.QtCore import (QMetaObject, Qt, QItemSelectionModel, QModelIndex, QCoreApplication,
+                          QFileInfo, pyqtSlot)
 from PyQt6.QtGui import (QCloseEvent, QKeySequence, QAction)
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QSplitter, QMessageBox, QMenuBar, QMenu,
                              QFileDialog, QTreeView)
@@ -26,13 +26,11 @@ class MainWindow(QMainWindow):
     def __init__(self, parent: QWidget = None):
         QMainWindow.__init__(self, parent)
 
-        # Initialize document tree model
-        self.model = DocumentTreeModel()
-
         # Initialize project session
-        self.session = ProjectSession(self.model)
+        self.session = ProjectSession()
         self.mod_state = self.session.mod_state
         self.mod_state.changed.connect(self.setWindowModified)
+        self.model = self.session.model
 
     def setup_ui(self):
         self.setObjectName("mainwindow")
@@ -105,46 +103,84 @@ class MainWindow(QMainWindow):
         self._reopen_last_file()
 
     def _setup_menu(self):
+        # Setup menubar
         self.menubar = QMenuBar(self)
         self.menubar.setObjectName("menubar")
-
         self.file_menu = QMenu(self.menubar)
-        self.file_menu.setObjectName("menuFile")
-        self.file_menu.setTitle("Datei")
+        self.edit_menu = QMenu(self.menubar)
+
+        # New action
+        self.new_action = QAction(self)
+        self.new_action.setObjectName("NewAction")
+        self.new_action.setText("Neue Datei...")
+        self.new_action.setShortcut(QKeySequence.StandardKey.New)
+        self.new_action.triggered.connect(self._on_new)
+
+        # Open action
         self.open_action = QAction(self)
         self.open_action.setObjectName("openAction")
-        self.open_action.setText("Öffnen")
+        self.open_action.setText("Öffnen...")
         self.open_action.setShortcut(QKeySequence.StandardKey.Open)
+        self.open_action.triggered.connect(self._on_open)
+
+        # Open recent action
         self.recent_files_menu = QMenu(self.file_menu)
         self.recent_files_menu.setObjectName("menuRecentFiles")
         self.recent_files_menu.setTitle("Zuletzt geöffnet")
         self._setup_recent_file_actions()
 
+        # Save action
+        self.save_action = QAction(self)
+        self.save_action.setObjectName("saveAction")
+        self.save_action.setText("Speichern")
+        self.save_action.setEnabled(False)
+        self.save_action.setShortcut(QKeySequence.StandardKey.Save)
+        self.mod_state.changed.connect(self.save_action.setEnabled)
+        self.save_action.triggered.connect(self._on_save)
+
+        # Save As action
+        self.save_as_action = QAction(self)
+        self.save_as_action.setObjectName("saveAsAction")
+        self.save_as_action.setText("Speichern als...")
+        self.save_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
+        self.save_as_action.triggered.connect(self._on_save_as)
+
+        # Exit action
         self.exit_action = QAction(self)
         self.exit_action.setObjectName("exitAction")
         self.exit_action.setText("Beenden")
         self.exit_action.setShortcut(QKeySequence.StandardKey.Quit)
+        self.exit_action.triggered.connect(self.close)
+
+        # Assemble file menu
+        self.file_menu.setObjectName("menuFile")
+        self.file_menu.setTitle("Datei")
+        self.file_menu.addAction(self.new_action)
         self.file_menu.addAction(self.open_action)
         self.file_menu.addMenu(self.recent_files_menu)
+        self.file_menu.addSeparator()
+        self.file_menu.addAction(self.save_action)
+        self.file_menu.addAction(self.save_as_action)
         self.file_menu.addSeparator()
         self.file_menu.addAction(self.exit_action)
         self.menubar.addAction(self.file_menu.menuAction())
 
-        self.edit_menu = QMenu(self.menubar)
-        self.edit_menu.setObjectName("menuEdit")
-        self.edit_menu.setTitle("Bearbeiten")
+        # -----------------------------------------------------------------
+
+        # Edit Icons action
         self.edit_icons_action = QAction(self)
         self.edit_icons_action.setObjectName("edit_icons")
         self.edit_icons_action.setText("Icons")
         self.edit_icons_action.setShortcut("Ctrl+Shift+I")
+        self.edit_icons_action.triggered.connect(self._on_edit_icons)
+
+        # Assemble edit menu
+        self.edit_menu.setObjectName("menuEdit")
+        self.edit_menu.setTitle("Bearbeiten")
         self.edit_menu.addAction(self.edit_icons_action)
         self.menubar.addAction(self.edit_menu.menuAction())
 
         self.setMenuBar(self.menubar)
-
-        self.open_action.triggered.connect(self._on_open_file)
-        self.exit_action.triggered.connect(self.close)
-        self.edit_icons_action.triggered.connect(self._on_edit_icons)
 
     def _setup_recent_file_actions(self):
         def open_recent(n):
@@ -186,12 +222,18 @@ class MainWindow(QMainWindow):
     # -----------------------------------------------
 
     @pyqtSlot()
-    def _on_edit_icons(self):
-        editor = IconManagerDialog('Icons bearbeiten')
-        editor.exec()
+    def _on_new(self):
+        # Make sure there are no unsaved changes
+        if not self._try_save_file():
+            # The action has been cancelled by the user
+            return
+
+        self.session.clear()
+        self._open_document(QModelIndex())
+        self.setWindowTitle('NoteTree')
 
     @pyqtSlot()
-    def _on_open_file(self):
+    def _on_open(self):
         # Make sure there are no unsaved changes
         if not self._try_save_file():
             # The action has been cancelled by the user
@@ -222,9 +264,28 @@ class MainWindow(QMainWindow):
 
             self._update_recent_action_list()
 
+    @pyqtSlot()
+    def _on_save(self):
+        self._save_to_file()
+
+    @pyqtSlot()
+    def _on_save_as(self):
+        self._save_to_file(True)
+
+    @pyqtSlot()
+    def _on_edit_icons(self):
+        editor = IconManagerDialog('Icons bearbeiten')
+        editor.exec()
+
     # -----------------------------------------------
-    # 4. Load and save data
+    # 4. Open / Save file
     # -----------------------------------------------
+
+    def _open_file(self, filename):
+        if filename == self.session.filename:
+            return
+
+        self._load_from_file(filename)
 
     def _load_from_file(self, filename):
         # Load project contents from file
@@ -249,6 +310,8 @@ class MainWindow(QMainWindow):
                     command = ModelSelectionFlag.ClearAndSelect | ModelSelectionFlag.Rows
                     treeview.selectionModel().select(index, command)
             self.model.iterate_all(lambda index: open_page(index, recently_opened_id, self.treeview))
+        else:
+            self._open_document(QModelIndex())
 
         # Reset modification status
         self.editor.textedit.document().setModified(False)
@@ -266,41 +329,34 @@ class MainWindow(QMainWindow):
         self._append_to_recent_files_list(filename)
         self._update_recent_action_list()
 
-    def _save_to_file(self, filename = None) -> bool:
-        if filename is None:
-            if self.session.filename is not None:
-                filename = self.session.filename
-            else:
-                # Open file dialog to specify path for new file
-                filename, _ = QFileDialog.getSaveFileName(self, 'Projekt speichern', None, "Projekte (*.json)")
+    def _save_to_file(self, prompt_filename: bool = False) -> bool:
+        if self.session.filename is None or prompt_filename:
+            # Open file dialog to specify path for new file
+            filename, _ = QFileDialog.getSaveFileName(self, 'Projekt speichern', None, "Projekte (*.json)")
 
-                if len(filename) == 0:
-                    # No file has been specified
-                    return False
+            if len(filename) == 0:
+                # No file has been specified
+                return False
+        else:
+            filename = self.session.filename
 
         # Save project to file
         self.session.save_to_file(filename)
 
         # Save ID of recently opened document to global settings
         document = self._get_document_metadata(self.document_tree.selected_index)
-        self.session.set_recently_opened_document(document.id if document is not None else None)
+        self.session.set_recently_opened_document(document)
+
+        # Update recent files list
+        self._append_to_recent_files_list(filename)
+        self._update_recent_action_list()
 
         return True
 
-    # -----------------------------------------------
-    # 5. New, open and close file
-    # -----------------------------------------------
-
-    def _open_file(self, filename):
-        if filename == self.session.filename:
-            return
-
-        self._load_from_file(filename)
-
     def _try_save_file(self):
         """
-        Check if the currently opened project has any changes and ask the user
-        if they should be saved.
+        Check if the currently opened project has any changes
+        and ask the user if they should be saved.
 
         Returns True, if the project file can be closed.
         Returns False, if the action should be cancelled.
@@ -331,7 +387,7 @@ class MainWindow(QMainWindow):
                 return True
 
     # -----------------------------------------------
-    # 6. Recent files handlers
+    # 5. Recent files handlers
     # -----------------------------------------------
 
     def _reopen_last_file(self):
@@ -361,37 +417,30 @@ class MainWindow(QMainWindow):
                 self.recent_file_actions[-n - 1].setVisible(False)
 
     # -----------------------------------------------
-    # 7. Private methods - DocumentTreeWidget slots
+    # 6. Private methods - DocumentTreeWidget slots
     # -----------------------------------------------
 
     @pyqtSlot(QModelIndex, QModelIndex)
     def _on_selection_changed(self, selected, deselected):
-        # If the flag is set, don't process the selection change
         self._open_document(selected)
 
     def _open_document(self, index: QModelIndex):
-        new_document = self._get_document_metadata(index)
-        if new_document is not None:
-            document = self.session.documents[new_document.id]
+        item = self._get_document_metadata(index)
+        if item is not None:
+            document = self.session.document(item)
             self.editor.textedit.set_document(document)
             self.editor.setEnabled(True)
-
             self.table_of_contents.set_text_document(document)
-            self.table_of_contents.setEnabled(True)
-
-            self.session.set_recently_opened_document(new_document.id)
         else:
             # Clear all contents
-            self.editor.textedit.import_from_markdown('')
+            self.editor.textedit.clear()
             self.editor.setEnabled(False)
-
             self.table_of_contents.clear()
-            self.table_of_contents.setEnabled(False)
 
-            self.session.set_recently_opened_document(None)
+        self.session.set_recently_opened_document(item)
 
     # -----------------------------------------------
-    # 8. Private methods - TableOfConents slots
+    # 7. Private methods - TableOfConents slots
     # -----------------------------------------------
 
     @pyqtSlot(QModelIndex)
@@ -413,10 +462,10 @@ class MainWindow(QMainWindow):
         self.editor.textedit.setTextCursor(cursor)
 
     # -----------------------------------------------
-    # 9. Static/Utility Methods
+    # 8. Static/Utility Methods
     # -----------------------------------------------
 
-    def _get_document_metadata(self, index: QModelIndex) -> DocumentMetadata:
+    def _get_document_metadata(self, index: QModelIndex) -> DocumentMetadata | None:
         if index.isValid():
             return index.internalPointer()
         return None

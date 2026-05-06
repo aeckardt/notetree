@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import List, Optional
 import json
 
 class ProjectFileError(Exception):
@@ -15,9 +14,15 @@ class ProjectFileVersionError(ProjectFileError):
 class ProjectFile:
     file_version: str = '1.1'
     name: str = ''
-    documents: List[dict] = field(default_factory=list)
+    documents: list[dict] = field(default_factory=list)
     next_id: int = 1
-    root_ids: List[int] = field(default_factory=list)
+    root_ids: list[int] = field(default_factory=list)
+
+    def clear(self):
+        self.name = ''
+        self.documents.clear()
+        self.next_id = 1
+        self.root_ids.clear()
 
     def load(self, filename):
         # Load data from file

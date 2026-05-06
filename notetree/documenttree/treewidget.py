@@ -153,7 +153,7 @@ class DocumentTreeWidget(QWidget):
         editor = DocumentNodeEditorDialog('Bearbeite Knoten...', item)
         if editor.exec() == QDialog.DialogCode.Accepted:
             self.model.update_index(self.selected_index)
-            self.model.changed.emit()
+            self.model.data_changed.emit()
 
     def remove_row(self):
         self.model.remove_item(self.selected_index)
@@ -183,12 +183,17 @@ class DocumentTreeWidget(QWidget):
 
     @pyqtSlot()
     def _on_model_loaded(self):
+        # Reset selected index
+        self.selected_index = QModelIndex()
+
+        # Expand all nodes with the 'expanded' flag
         def maybe_expand(index: QModelIndex):
             item: DocumentMetadata = index.internalPointer()
             self.treeview.setExpanded(index, item.expanded)
-
         model: DocumentTreeModel = self.treeview.model()
         model.iterate_all(maybe_expand)
+
+        self._update_enabled_status()
 
     @pyqtSlot()
     def _on_edit_clicked(self):
@@ -309,7 +314,7 @@ class DocumentTreeWidget(QWidget):
         editor = DocumentNodeEditorDialog('Bearbeite Knoten...', item)
         if editor.exec() == QDialog.DialogCode.Accepted:
             self.model.update_index(index)
-            self.model.changed.emit()
+            self.model.data_changed.emit()
 
         event.accept()
         return

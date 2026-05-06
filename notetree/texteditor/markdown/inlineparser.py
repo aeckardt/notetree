@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Union
+from typing import Union
 from enum import IntEnum
 import unicodedata
 import re
@@ -17,9 +17,9 @@ class InlineNode:
         html_tag = 5
         text = 6
     type: Type
-    content: Optional[str] = None  # Contains text or HTML tag name
-    attrs: Optional[dict] = None
-    children: Optional[List["InlineNode"]] = None
+    content: str | None = None  # Contains text or HTML tag name
+    attrs: dict | None = None
+    children: list["InlineNode"] | None = None
 
 @dataclass
 class DelimiterRun:
@@ -37,7 +37,7 @@ class DelimiterRun:
 class InlineHtmlTag:
     content: str  # Original input string for the tag
     tag: str  # 'ins', 'span', ...
-    attrs: Optional[dict] = None
+    attrs: dict | None = None
 
 @dataclass
 class ScopeMarker:
@@ -53,12 +53,12 @@ class ScopeMarker:
         bracket = 1   # '![', '[' or ']'
         asterisk = 2  # '*', '**', '***', ...
     type: Type
-    marker: Optional[Union[DelimiterRun, InlineHtmlTag]] = None
-    can_open: bool = False
-    can_close: bool = False
-    node: Optional[InlineNode] = None
+    marker: Union[DelimiterRun, InlineHtmlTag]
+    can_open: bool
+    can_close: bool
+    node: InlineNode | None = None
 
-def is_punctuation(ch: Optional[str]) -> bool:
+def is_punctuation(ch: str | None) -> bool:
     if ch is None:
         return False
     # Unicode categories starting with 'P' are all punctuation
@@ -242,7 +242,7 @@ class MarkdownInlineParser:
             marker = self.pop_scope_marker()
             self.integrate_marker_as_text(marker)
 
-    def find_opening_marker(self, marker: ScopeMarker) -> Optional[ScopeMarker]:
+    def find_opening_marker(self, marker: ScopeMarker) -> ScopeMarker | None:
         length = len(self.open_scope_stack)
 
         # Find the nearest position of the marker in the stack
@@ -332,7 +332,7 @@ class MarkdownInlineParser:
         else:
             node.type = NodeType.strong
 
-    def try_parse_html_tag(self) -> Optional[ScopeMarker]:
+    def try_parse_html_tag(self) -> ScopeMarker | None:
         Type = ScopeMarker.Type
 
         # Condition for entering this method:

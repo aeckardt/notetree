@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 from PyQt6.QtGui import (QTextBlock, QTextFragment, QTextCharFormat)
 
@@ -17,13 +16,13 @@ class Format:
 
     type: Type
     start: int
-    end: Optional[int] = -1
-    attrs: Optional[dict] = None
+    end: int = -1
+    attrs: dict | None = None
 
 @dataclass
 class FormatChange:
     type: Format.Type
-    attrs: Optional[dict] = None
+    attrs: dict | None = None
     open: bool = True
 
 @dataclass
@@ -32,7 +31,7 @@ class ExportableFragment:
     # The format changes are ordered in a such a manner
     # that the inner/outer always match when you apply them
     # in the given order
-    fmt_changes: Optional[list[FormatChange]] = None
+    fmt_changes: list[FormatChange] | None = None
 
 class InlineFormatResolver:
     """

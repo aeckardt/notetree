@@ -49,7 +49,7 @@ class TableOfContents(QWidget):
         self.setFocusProxy(self.treeview)
 
     def clear(self):
-        pass
+        self.model.clear()
 
     def set_text_document(self, document: QTextDocument = None):
         self.model.load_document(document)

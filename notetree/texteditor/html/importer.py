@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 import re
 import html
 import sys
@@ -17,9 +16,9 @@ class Token:
         text = 2
         self_closing_tag = 3
     type: Type  # start_tag, end_tag, text or self_closing_tag
-    name: Optional[str] = None  # tag name
-    attrs: Optional[dict] = None
-    content: Optional[str] = None  # for text or comments
+    name: str | None = None  # tag name
+    attrs: dict | None = None
+    content: str | None = None  # for text or comments
 
 TAG_PATTERN = re.compile(
     r'(?P<tag><[^>]+>)|(?P<text>[^<]+)', re.DOTALL
@@ -39,10 +38,10 @@ class HtmlNode:
         text = 1
 
     type: Type  # element or text
-    name: Optional[str] = None  # tag name if element
-    attrs: Optional[Dict[str, str]] = field(default_factory=dict)
-    children: List["HtmlNode"] = field(default_factory=list)
-    content: Optional[str] = None  # only for text nodes
+    name: str | None = None  # tag name if element
+    attrs: dict[str, str] = field(default_factory=dict)
+    children: list["HtmlNode"] = field(default_factory=list)
+    content: str | None = None  # only for text nodes
 
 class RenderContext:
     def __init__(self, styles = None, metadata = None):
@@ -435,10 +434,10 @@ class HtmlImporter:
                     )
 
     @staticmethod
-    def _parse(tokens) -> List[HtmlNode]:
+    def _parse(tokens) -> list[HtmlNode]:
         pos = 0
 
-        def parse_nodes(stop_tag: Optional[str] = None) -> List[HtmlNode]:
+        def parse_nodes(stop_tag: str | None = None) -> list[HtmlNode]:
             nonlocal pos
             nodes = []
 
@@ -553,7 +552,7 @@ class HtmlImporter:
         Recursively searches for a node with the given tag name in the AST.
 
         Parameters:
-            root (HtmlNode or List[HtmlNode]): The root of the AST or a list of nodes.
+            root (HtmlNode or list[HtmlNode]): The root of the AST or a list of nodes.
             tag_name (str): The tag name to search for (case-insensitive).
 
         Returns:

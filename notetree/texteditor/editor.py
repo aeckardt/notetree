@@ -172,27 +172,7 @@ class TextEditor(QTextEdit):
     # 2. Public methods - Export/Import document
     # -----------------------------------------------
 
-    def export_to_html(self) -> str:
-        return HtmlExporter(self.document(), skip_header=True).output
-
-    def export_to_markdown(self) -> str:
-        return MarkdownExporter(self.document()).output
-
-    def import_from_html(self, input: str):
-        # Setup new document from HTML input
-        self.set_document(HtmlImporter(input).document)
-
-    def import_from_markdown(self, input: str):
-        # Setup new document from Markdown input
-        self.set_document(MarkdownImporter(input).document)
-
     def set_document(self, document: QTextDocument):
-        # Clear previous document
-        try:
-            self.document().modificationChanged.disconnect()
-        except TypeError:
-            pass
-
         # Change tab indent width (which me thinks, looks better than such a wide tab)
         indent_width = getattr(style_module, 'DOCUMENT_INDENT_WIDTH', None)
         if indent_width is not None:
@@ -200,11 +180,10 @@ class TextEditor(QTextEdit):
 
         # Assign the imported document to the editor
         QTextEdit.setDocument(self, document)
-        document.setModified(False)
 
-        # Update undo, redo and save actions (the undoAvailable signal might not have been emitted)
-        self.undo_action.setEnabled(False)
-        self.redo_action.setEnabled(False)
+        # Update undo, redo actions (the undoAvailable signal might not have been emitted)
+        self.undo_action.setEnabled(document.isUndoAvailable())
+        self.redo_action.setEnabled(document.isRedoAvailable())
 
         # Move cursor to the start
         self.moveCursor(QTextCursor.MoveOperation.Start)

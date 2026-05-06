@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional, List
 import re
 
 from PyQt6.QtGui import (QTextDocument, QTextCursor, QTextBlockFormat, QTextCharFormat, QTextFormat, QFont)
@@ -17,8 +16,8 @@ class BlockToken:
         paragraph = 3
         blank = 4
     type: Type  # 'heading', 'list_item', 'paragraph', etc.
-    level: Optional[int] = None   # For heading or list depth
-    children: Optional[List["InlineNode"]] = None
+    level: int | None = None   # For heading or list depth
+    children: list["InlineNode"] | None = None
 
 class MarkdownImporter:
     """
@@ -72,7 +71,7 @@ class MarkdownImporter:
 
         return document
 
-    def _render_blocks(self, cursor: QTextCursor, tokens: List[BlockToken]):
+    def _render_blocks(self, cursor: QTextCursor, tokens: list[BlockToken]):
         Type = BlockToken.Type
 
         # Iterate over all block tokens.
@@ -138,7 +137,7 @@ class MarkdownImporter:
             # Set blockformat for the current block before adding a new
             self._end_line(cursor)
 
-    def _render_inlines(self, cursor: QTextCursor, nodes: List[InlineNode]):
+    def _render_inlines(self, cursor: QTextCursor, nodes: list[InlineNode]):
         Type = InlineNode.Type
 
         def apply_node_style(node: InlineNode, char_format: QTextCharFormat):
@@ -200,7 +199,7 @@ class MarkdownImporter:
         # Setting the char format at the end of the line can affect rendering
         cursor.setCharFormat(self.char_fmt)
 
-    def _tokenize(self, markdown_input: str) -> List[BlockToken]:
+    def _tokenize(self, markdown_input: str) -> list[BlockToken]:
         Type = BlockToken.Type
 
         lines = markdown_input.splitlines()
@@ -238,5 +237,5 @@ class MarkdownImporter:
                 ))
         return tokens
 
-    def _parse_inline(self, text: str) -> List[InlineNode]:
+    def _parse_inline(self, text: str) -> list[InlineNode]:
         return MarkdownInlineParser(text).ast_root.children

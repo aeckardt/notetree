@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 import re
 import urllib.parse
 
@@ -10,7 +9,7 @@ from notetree.texteditor.inlineformat.resolver import ExportableFragment, Format
 @dataclass
 class Tag:
     name: str
-    attrs: Optional[dict] = None
+    attrs: dict | None = None
 
 TagStack = list[Tag]
 

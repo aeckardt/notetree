@@ -7,9 +7,9 @@ SETTINGS_PATH = "data/settings.json"
 
 class Settings:
     def __init__(self):
-        self.__data = {}
+        self.__data: dict[str, dict] = {}
 
-    def config(self, name, default = {}):
+    def config(self, name: str, default = {}) -> dict:
         if name not in self.__data:
             self.__data[name] = default
         return self.__data[name]
