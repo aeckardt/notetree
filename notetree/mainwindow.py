@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QSplitter, QMess
 
 from notetree.common.utils.errormessage import show_error_msg
 from notetree.common.utils.settings import settings
-from notetree.documenttree.treemodel import DocumentMetadata, DocumentTreeModel
+from notetree.documenttree.treemodel import DocumentNode
 from notetree.documenttree.treewidget import DocumentTreeWidget
 from notetree.library.icons.managerdialog import IconManagerDialog
 from notetree.outline import OutlineItem, TableOfContents
@@ -304,12 +304,12 @@ class MainWindow(QMainWindow):
         # Reopen recently opened document (if available)
         if recently_opened_id is not None:
             def open_page(index: QModelIndex, id, treeview: QTreeView):
-                document: DocumentMetadata = index.internalPointer()
-                if document.id == id:
+                node = index.internalPointer()
+                if node.id == id:
                     ModelSelectionFlag = QItemSelectionModel.SelectionFlag
                     command = ModelSelectionFlag.ClearAndSelect | ModelSelectionFlag.Rows
                     treeview.selectionModel().select(index, command)
-            self.model.iterate_all(lambda index: open_page(index, recently_opened_id, self.treeview))
+            self.model.iterate(lambda index: open_page(index, recently_opened_id, self.treeview))
         else:
             self._open_document(QModelIndex())
 
@@ -344,8 +344,8 @@ class MainWindow(QMainWindow):
         self.session.save_to_file(filename)
 
         # Save ID of recently opened document to global settings
-        document = self._get_document_metadata(self.document_tree.selected_index)
-        self.session.set_recently_opened_document(document)
+        meta = self._get_document_metadata(self.document_tree.selected_index)
+        self.session.set_recently_opened_document(meta.id)
 
         # Update recent files list
         self._append_to_recent_files_list(filename)
@@ -425,9 +425,9 @@ class MainWindow(QMainWindow):
         self._open_document(selected)
 
     def _open_document(self, index: QModelIndex):
-        item = self._get_document_metadata(index)
-        if item is not None:
-            document = self.session.document(item)
+        meta = self._get_document_metadata(index)
+        if meta is not None:
+            document = self.session.document(meta.id)
             self.editor.textedit.set_document(document)
             self.editor.setEnabled(True)
             self.table_of_contents.set_text_document(document)
@@ -437,7 +437,7 @@ class MainWindow(QMainWindow):
             self.editor.setEnabled(False)
             self.table_of_contents.clear()
 
-        self.session.set_recently_opened_document(item)
+        self.session.set_recently_opened_document(meta.id)
 
     # -----------------------------------------------
     # 7. Private methods - TableOfConents slots
@@ -451,12 +451,12 @@ class MainWindow(QMainWindow):
             return
 
         block_index = item.block_index()
-        text_document = self.editor.textedit.document()
+        document = self.editor.textedit.document()
 
         scrollbar = self.editor.textedit.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
 
-        block = text_document.findBlockByNumber(block_index)
+        block = document.findBlockByNumber(block_index)
         cursor = self.editor.textedit.textCursor()
         cursor.setPosition(block.position())
         self.editor.textedit.setTextCursor(cursor)
@@ -465,7 +465,7 @@ class MainWindow(QMainWindow):
     # 8. Static/Utility Methods
     # -----------------------------------------------
 
-    def _get_document_metadata(self, index: QModelIndex) -> DocumentMetadata | None:
+    def _get_document_metadata(self, index: QModelIndex) -> DocumentNode | None:
         if index.isValid():
             return index.internalPointer()
         return None

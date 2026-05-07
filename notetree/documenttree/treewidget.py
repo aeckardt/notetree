@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QVBoxLayout, QGroupBox, QLabe
 
 from notetree.common.widgets.gradientbutton import GradientButton
 from notetree.documenttree.nodeeditor import DocumentNodeEditorDialog
-from notetree.documenttree.treemodel import DocumentMetadata, DocumentTreeModel
+from notetree.documenttree.treemodel import DocumentNode, DocumentTreeModel
 from notetree.documenttree.treeview import DocumentTreeView
 
 class DocumentTreeWidget(QWidget):
@@ -142,21 +142,21 @@ class DocumentTreeWidget(QWidget):
 
     # Overrideable methods
     def add_row(self):
-        new_item = DocumentMetadata()
-        ned = DocumentNodeEditorDialog('Füge neuen Knoten hinzu...', new_item)
+        new_node = DocumentNode()
+        ned = DocumentNodeEditorDialog('Füge neuen Knoten hinzu...', new_node)
         if ned.exec() == QDialog.DialogCode.Accepted:
-            self.model.append_item(new_item, self.selected_index)
+            self.model.insert_child_node(new_node, self.selected_index)
 
     def edit_row(self):
-        item: DocumentMetadata = self.selected_index.internalPointer()
+        node: DocumentNode = self.selected_index.internalPointer()
 
-        editor = DocumentNodeEditorDialog('Bearbeite Knoten...', item)
+        editor = DocumentNodeEditorDialog('Bearbeite Knoten...', node)
         if editor.exec() == QDialog.DialogCode.Accepted:
             self.model.update_index(self.selected_index)
-            self.model.data_changed.emit()
+            self.model.tree_changed.emit()
 
     def remove_row(self):
-        self.model.remove_item(self.selected_index)
+        self.model.remove_node(self.selected_index)
 
     def move_up_row(self):
         row = self.selected_index.row()
@@ -188,10 +188,10 @@ class DocumentTreeWidget(QWidget):
 
         # Expand all nodes with the 'expanded' flag
         def maybe_expand(index: QModelIndex):
-            item: DocumentMetadata = index.internalPointer()
-            self.treeview.setExpanded(index, item.expanded)
+            node = index.internalPointer()
+            self.treeview.setExpanded(index, node.is_expanded)
         model: DocumentTreeModel = self.treeview.model()
-        model.iterate_all(maybe_expand)
+        model.iterate(maybe_expand)
 
         self._update_enabled_status()
 
@@ -310,11 +310,11 @@ class DocumentTreeWidget(QWidget):
             # Do not open editor in this case (if possible: expand or collapse)
             return QTreeView.mouseDoubleClickEvent(self.treeview, event)
 
-        item: DocumentMetadata = index.internalPointer()
-        editor = DocumentNodeEditorDialog('Bearbeite Knoten...', item)
+        node: DocumentNode = index.internalPointer()
+        editor = DocumentNodeEditorDialog('Bearbeite Knoten...', node)
         if editor.exec() == QDialog.DialogCode.Accepted:
             self.model.update_index(index)
-            self.model.data_changed.emit()
+            self.model.tree_changed.emit()
 
         event.accept()
         return

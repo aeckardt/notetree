@@ -6,17 +6,17 @@ from PyQt6.QtWidgets import (QWidget, QDialog, QVBoxLayout, QLabel, QLineEdit, Q
 
 from notetree.common.utils.settings import settings
 from notetree.common.widgets.gradientbutton import GradientButton
-from notetree.documenttree.treemodel import DocumentMetadata
+from notetree.documenttree.treemodel import DocumentNode
 from notetree.library.icons.datacontainer import icons
 from notetree.library.icons.selector import IconSelectorDialog
 
 class DocumentNodeEditorDialog(QDialog):
-    def __init__(self, window_title: str, item: DocumentMetadata, parent: QWidget = None):
+    def __init__(self, window_title: str, node: DocumentNode, parent: QWidget = None):
         QDialog.__init__(self, parent)
 
         self.setMinimumSize(450, 70)
 
-        self.item = item
+        self.node = node
 
         layout = QVBoxLayout()
         layout.setContentsMargins(10, 10, 10, 10)
@@ -97,10 +97,10 @@ class DocumentNodeEditorDialog(QDialog):
 
     def _load_contents(self):
         # Set description
-        self.description_edit.setText(self.item.name)
+        self.description_edit.setText(self.node.displayed_name)
 
         # Set icon
-        self.icon_index = self.item.icon
+        self.icon_index = self.node.icon_index
         self._update_icon()
 
     def _on_remove_clicked(self):
@@ -114,8 +114,8 @@ class DocumentNodeEditorDialog(QDialog):
             self._update_icon()
 
     def _save_contents(self):
-        self.item.name = self.description_edit.text()
-        self.item.icon = self.icon_index
+        self.node.displayed_name = self.description_edit.text()
+        self.node.icon_index = self.icon_index
 
     def _update_icon(self):
         if self.icon_index is not None:

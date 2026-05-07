@@ -6,31 +6,33 @@ from PyQt6.QtCore import (QModelIndex, QAbstractItemModel, QObject, pyqtSignal, 
 from notetree.project.file import ProjectFile
 
 @dataclass
-class DocumentMetadata:
+class DocumentNode:
     """
-    Represents metadata for one document in the project.
-    That includes in particular its links (parent, children) to other documents.
+    Represents a node for one document in the project.
+    That includes its displayed name, icon and links (parent, children) to other documents.
+
+    The document text itself is stored as markdown string.
     """
 
     # The unique ID is used to identify the document
     id: int | None = None
 
     # Name and icon of the document are visible in the treeview
-    name: str = ''
-    icon: str | None = None
+    displayed_name: str = ''
+    icon_index: int | None = None
 
     # Since documents are organized hierarchically in a tree,
     # they are also nodes (potentially) with a parent and children.
-    parent: "DocumentMetadata | None" = None
-    children: list["DocumentMetadata"] = field(default_factory=list)
+    parent: "DocumentNode | None" = None
+    children: list["DocumentNode"] = field(default_factory=list)
 
     # Expanded state of treeview node
-    expanded: bool = True
+    is_expanded: bool = True
 
     # Markdown string of document text
-    notes: str = ''
+    markdown: str = ''
 
-    def is_ancestor_of(self, other: "DocumentMetadata") -> bool:
+    def is_ancestor_of(self, other: "DocumentNode") -> bool:
         cur = other
         while cur is not None:
             if cur is self:
@@ -58,9 +60,9 @@ MIME_TYPE = "application/x-document-id"
 
 class DocumentTreeModel(QAbstractItemModel):
     loaded = pyqtSignal()
-    inserted = pyqtSignal(DocumentMetadata)
-    removed = pyqtSignal(DocumentMetadata)
-    data_changed = pyqtSignal()
+    inserted = pyqtSignal(int)
+    removed = pyqtSignal(list)
+    tree_changed = pyqtSignal()
 
     # -----------------------------------------------
     # 1. Standard TreeModel handlers (add, remove, ...)
@@ -70,130 +72,135 @@ class DocumentTreeModel(QAbstractItemModel):
         QAbstractItemModel.__init__(self, parent)
 
         # Invisible root above top level nodes (= "roots")
-        self.super_root = DocumentMetadata()
+        self._invisible_root = DocumentNode()
 
-        # Next unused document ID
-        self.next_id = 1
+        # Next unused unique document ID
+        self._next_id = 1
 
-        # Mapping: Document ID to corresponding QModelIndex
-        self.index_from_id = {}
+        # Mapping of document ID to node for quick access
+        self._node_from_id: dict[int, DocumentNode] = {}
 
-    def append_item(self, item: DocumentMetadata, parent: QModelIndex):
-        if parent.isValid():
-            parent_item = parent.internalPointer()
-        elif self.super_root is not None:
-            parent_item = self.super_root
-        else:
-            raise Exception('Cannot add items without a root item')
+    def insert_child_node(self, node: DocumentNode, parent: QModelIndex):
+        parent_node = self.node_from_index(parent)
 
-        row = len(parent_item.children)
+        row = len(parent_node.children)
 
         self.beginInsertRows(parent, row, row)
-        if item.id is None:
-            item.id = self.generate_id()
-        item.parent = parent_item
-        parent_item.children.append(item)
+        if node.id is None:
+            node.id = self.generate_id()
+        self._node_from_id[node.id] = node
+        node.parent = parent_node
+        parent_node.children.append(node)
         self.endInsertRows()
 
-        self.data_changed.emit()
-        self.inserted.emit(item)
+        self.tree_changed.emit()
+        self.inserted.emit(node.id)
 
     def columnCount(self, _):
         return 1
 
-    def data(self, index, role):
+    def data(self, index: QModelIndex, role: Qt.ItemDataRole):
         if not index.isValid():
             return None
 
-        item: DocumentMetadata = index.internalPointer()
+        node: DocumentNode = index.internalPointer()
         if role == Qt.ItemDataRole.DisplayRole:
-            return item.name
+            return node.displayed_name
         elif role == ITEM_ICON_ROLE:
-            return item.icon
+            return node.icon_index
 
         return None
 
-    def flags(self, index):
+    def flags(self, index: QModelIndex):
         if index.isValid():
             return QAbstractItemModel.flags(self, index)
         else:
             return Qt.ItemFlag.NoItemFlags
 
-    def index(self, row, column, parent):
+    def index(self, row: int, column: int, parent: QModelIndex):
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
-        if parent.isValid():
-            parent_item = parent.internalPointer()
-        elif self.super_root is not None:
-            parent_item = self.super_root
-        else:
-            return QModelIndex()
-        child_item = parent_item.children[row]
-        index = self.createIndex(row, column, child_item)
-        self.index_from_id[child_item.id] = index
-        return index
 
-    def moveRow(self, source_parent, source_row, destination_parent, destination_child):
+        parent_node = self.node_from_index(parent)
+        child_node = parent_node.children[row]
+
+        return self.createIndex(row, column, child_node)
+
+    def node_from_index(self, index: QModelIndex) -> DocumentNode:
+        if not index.isValid():
+            return self._invisible_root
+        return index.internalPointer()
+
+    def index_from_node(self, node: DocumentNode) -> QModelIndex:
+        if node is None or node is self._invisible_root:
+            return QModelIndex()
+        return self.createIndex(node.row(), 0, node)
+
+    def moveRow(self, source_parent: QModelIndex, source_row: int,
+                destination_parent: QModelIndex, destination_child: int):
         if source_parent != destination_parent:
             return False
 
-        parent_item: DocumentMetadata = source_parent.internalPointer()
-        if parent_item is not None:
-            parent_item.swap(source_row, destination_child)
+        parent_node: DocumentNode = source_parent.internalPointer()
+        if parent_node is not None:
+            parent_node.swap(source_row, destination_child)
         else:
-            self.super_root.swap(source_row, destination_child)
+            self._invisible_root.swap(source_row, destination_child)
 
-        self.data_changed.emit()
+        self.tree_changed.emit()
 
         return True
 
-    def parent(self, index):
+    def parent(self, index: QModelIndex):
         if not index.isValid():
             return QModelIndex()
 
-        child_item = index.internalPointer()
-        parent_item = child_item.parent
+        node: DocumentNode = index.internalPointer()
+        parent_node = node.parent
 
-        if parent_item == None:
+        if parent_node is None or parent_node is self._invisible_root:
             return QModelIndex()
-        return self.createIndex(parent_item.row(), 0, parent_item)
 
-    def remove_item(self, index: QModelIndex):
-        if index.isValid():
-            item = index.internalPointer()
-        else:
-            raise Exception('Invalid item cannot be removed')
+        return self.createIndex(parent_node.row(), 0, parent_node)
 
+    def remove_node(self, index: QModelIndex):
+        if not index.isValid():
+            raise Exception('Invalid node cannot be removed')
+
+        node: DocumentNode = index.internalPointer()
         if index.parent().isValid():
             parent_index = index.parent()
-            parent_item = parent_index.internalPointer()
-        elif self.super_root is not None:
+            parent_node = parent_index.internalPointer()
+        elif self._invisible_root is not None:
             parent_index = QModelIndex()
-            parent_item = self.super_root
+            parent_node = self._invisible_root
         else:
-            raise Exception('Cannot remove item without a root item')
+            raise Exception('Cannot remove node without a root node')
 
-        row = item.row()
+        row = node.row()
 
+        # Remove node from tree structure
         self.beginRemoveRows(parent_index, row, row)
-        parent_item.children.pop(row)
+        parent_node.children.pop(row)
         self.endRemoveRows()
 
-        self.data_changed.emit()
-        self.removed.emit(item)
+        # Emit tree changed signal for update of treeview
+        self.tree_changed.emit()
 
-    def rowCount(self, parent):
+        # Emit removed signal with list of all removed document IDs (including subtree)
+        def subtree_ids(node: DocumentNode) -> list[int]:
+            ids = [node.id]
+            for child in node.children:
+                ids.extend(subtree_ids(child))
+            return ids
+        self.removed.emit(subtree_ids(node))
+
+    def rowCount(self, parent: QModelIndex):
         if parent.column() > 0:
             return 0
 
-        if parent.isValid():
-            parent_item = parent.internalPointer()
-        elif self.super_root is not None:
-            parent_item = self.super_root
-        else:
-            return 0
-
-        return len(parent_item.children)
+        parent_node = self.node_from_index(parent)
+        return len(parent_node.children)
 
     def update_index(self, index: QModelIndex):
         self.dataChanged.emit(index, index, [Qt.ItemDataRole.DisplayRole, ITEM_ICON_ROLE])
@@ -203,21 +210,18 @@ class DocumentTreeModel(QAbstractItemModel):
     # -----------------------------------------------
 
     def generate_id(self) -> int:
-        new_id = self.next_id
-        self.next_id += 1
+        new_id = self._next_id
+        self._next_id += 1
         return new_id
 
-    def next_id(self) -> int:
-        return self.next_id
-
     def root_ids(self):
-        if self.super_root is None:
+        if self._invisible_root is None:
             return []
 
         ids = []
-        root_count = len(self.super_root.children)
+        root_count = len(self._invisible_root.children)
         for row in range(root_count):
-            child_id = self.super_root.children[row].id
+            child_id = self._invisible_root.children[row].id
             ids.append(child_id)
 
         return ids
@@ -230,44 +234,50 @@ class DocumentTreeModel(QAbstractItemModel):
         self.beginResetModel()
 
         # Reset tree structure with new root
-        self.super_root = DocumentMetadata()
-        self.next_id = project.next_id
+        self._invisible_root = DocumentNode()
+        self._next_id = project.next_id
+
+        # Reset mapping of document ID to node
+        self._node_from_id.clear()
 
         # Generate list of all document IDs (ordered by their index in "project.documents")
-        document_ids = []
+        document_ids: list[int] = []
         for doc in project.documents:
             document_ids.append(doc['id'])
 
-        def integrate_item(item_id: int, parent_item: DocumentMetadata):
+        def integrate_node(doc_id: int, parent_node: DocumentNode):
             """
-            Integrate tree items recursively.
+            Integrate tree nodes recursively.
             """
             # Get dataset with specified ID from list
-            item_dict = project.documents[document_ids.index(item_id)]
+            node_record = project.documents[document_ids.index(doc_id)]
 
             # Build node (= DocumentMetadata object) from this dataset
-            item = DocumentMetadata(item_dict['id'], item_dict['description'], item_dict.get('icon'), parent_item)
-            if 'expanded' in item_dict:
-                item.expanded = item_dict['expanded']
-            if 'notes' in item_dict:
-                item.notes = '\n'.join(item_dict['notes'])
+            node = DocumentNode(node_record['id'], node_record['description'], node_record.get('icon'), parent_node)
+            if 'expanded' in node_record:
+                node.is_expanded = node_record['expanded']
+            if 'notes' in node_record:
+                node.markdown = '\n'.join(node_record['notes'])
 
             # Add children (if available)
-            if 'children' in item_dict:
-                for child_id in item_dict['children']:
+            if 'children' in node_record:
+                for child_id in node_record['children']:
                     if not child_id in document_ids:
                         raise Exception('Document referenced by id not found.')
-                    integrate_item(child_id, item)
+                    integrate_node(child_id, node)
+
+            # Add node to mapping
+            self._node_from_id[node.id] = node
 
             # Link node to parent
-            parent_item.children.append(item)
+            parent_node.children.append(node)
 
         # Build tree
-        # Start with top level "root" items (under super root) 
+        # Start with top level "root" nodes (under invisible super root) 
         for root_id in project.root_ids:
             if not root_id in document_ids:
                 raise Exception('Root referenced by id not found.')
-            integrate_item(root_id, self.super_root)
+            integrate_node(root_id, self._invisible_root)
 
         self.endResetModel()
 
@@ -277,45 +287,45 @@ class DocumentTreeModel(QAbstractItemModel):
         # Clear data before export
         project.documents = []
         project.root_ids = []
-        project.next_id = self.next_id
+        project.next_id = self._next_id
 
-        def add_dataset(parent_item: DocumentMetadata, row: int, parent_dict: dict = None):
+        def add_dataset(parent_node: DocumentNode, row: int, parent_record: dict = None):
             """
             Build flat list recursively from tree.
             """
-            # Get item from children list
-            item = parent_item.children[row]
+            # Get node from children list
+            node = parent_node.children[row]
 
-            # Add item ID to parent dataset
-            if parent_dict is None:
+            # Add node ID to parent dataset
+            if parent_record is None:
                 # No (visible) parent, add ID to "roots"
-                project.root_ids.append(item.id)
+                project.root_ids.append(node.id)
             else:
-                if 'children' not in parent_dict:
-                    parent_dict['children'] = []
-                parent_dict['children'].append(item.id)
+                if 'children' not in parent_record:
+                    parent_record['children'] = []
+                parent_record['children'].append(node.id)
 
-            # Build dataset (dict) from DocumentMetadata object
-            item_dict = {'description': item.name, 'id': item.id}
-            if not item.expanded:
-                item_dict['expanded'] = item.expanded
-            if item.icon is not None:
-                item_dict['icon'] = item.icon
-            if item.notes is not None and len(item.notes) > 0:
-                item_dict['notes'] = item.notes.splitlines()
+            # Build dataset (dict) from DocumentNode object
+            node_record = {'description': node.displayed_name, 'id': node.id}
+            if not node.is_expanded:
+                node_record['expanded'] = node.is_expanded
+            if node.icon_index is not None:
+                node_record['icon'] = node.icon_index
+            if node.markdown is not None and len(node.markdown) > 0:
+                node_record['notes'] = node.markdown.splitlines()
 
             # Add dataset to documents list
-            project.documents.append(item_dict)
+            project.documents.append(node_record)
 
             # Add children (if available)
-            child_count = len(item.children)
+            child_count = len(node.children)
             for row in range(child_count):
-                add_dataset(item, row, item_dict)
+                add_dataset(node, row, node_record)
 
         # Add all documents, starting with roots
-        root_count = len(self.super_root.children)
+        root_count = len(self._invisible_root.children)
         for row in range(root_count):
-            add_dataset(self.super_root, row)
+            add_dataset(self._invisible_root, row)
 
         # Sort by document ID
         # -> This vastly improves diffs between revisions
@@ -342,94 +352,94 @@ class DocumentTreeModel(QAbstractItemModel):
         indexes = [ix for ix in indexes if ix.isValid() and ix.column() == 0]
         if not indexes:
             return None
-        src: QModelIndex = indexes[0]
-        item: DocumentMetadata = src.internalPointer()
+        source_index: QModelIndex = indexes[0]
+        source_node: DocumentNode = source_index.internalPointer()
 
         ba = QByteArray()
-        stream = QDataStream(ba, QIODevice.OpenModeFlag.WriteOnly
-                             if hasattr(QIODevice, "OpenModeFlag") else QIODevice.OpenModeFlag.WriteOnly)
-        stream.writeInt32(item.id)
+        stream = QDataStream(ba, QIODevice.OpenModeFlag.WriteOnly)
+        stream.writeInt32(source_node.id)
 
         md = QMimeData()
         md.setData(MIME_TYPE, ba)
         return md
 
-    def dropMimeData(self, data, action, row, column, parent_index: QModelIndex):
+    def dropMimeData(self, data: QMimeData, action: Qt.DropAction, row: int, column: int, parent_index: QModelIndex):
         if action != Qt.DropAction.MoveAction:
             return False
         if not data or not data.hasFormat(MIME_TYPE):
             return False
 
         if parent_index.isValid():
-            dst_parent = parent_index.internalPointer()
+            new_parent_node: DocumentNode = parent_index.internalPointer()
         else:
-            dst_parent = self.super_root
+            new_parent_node = self._invisible_root
 
-        # The given row is where the item should be inserted
+        # The given row is where the node should be inserted
         # It is -1, when no row is specified
 
         if row == -1:
-            dst_row = len(dst_parent.children)
+            new_row = len(new_parent_node.children)
         else:
-            dst_row = row
+            new_row = row
 
         # Determine source
         ba = data.data(MIME_TYPE)
-        stream = QDataStream(ba, QIODevice.OpenModeFlag.ReadOnly
-                             if hasattr(QIODevice, "OpenModeFlag") else QIODevice.OpenModeFlag.ReadOnly)
-        src_id = stream.readInt32()
+        stream = QDataStream(ba, QIODevice.OpenModeFlag.ReadOnly)
+        doc_id = stream.readInt32()
 
-        if src_id in self.index_from_id:
-            src_index: QModelIndex = self.index_from_id[src_id]
-        else:
+        # Determine source node and old parent node
+        source_node = self._node_from_id.get(doc_id)
+        if source_node is None:
             return False
-        src_item: DocumentMetadata = src_index.internalPointer()
-        src_parent: DocumentMetadata = src_item.parent
-        if src_parent is None:
+        old_parent_node: DocumentNode = source_node.parent
+        if old_parent_node is None:
             return False
 
         # Don't drop into itself / own ancestors
-        if src_item.is_ancestor_of(dst_parent):
+        if source_node.is_ancestor_of(new_parent_node):
             return False
 
-        if src_parent.id in self.index_from_id:
-            src_parent_index: QModelIndex = self.index_from_id[src_parent.id]
-        else:
-            if src_parent is self.super_root:
-                src_parent_index = QModelIndex()
-            else:
-                return False
-        src_row = src_item.row()
+        # Determine old parent index
+        old_parent_index = self.index_from_node(old_parent_node)
+        source_row = source_node.row()
 
-        if src_parent is dst_parent:
-            if src_row < dst_row:
-                dst_row -= 1
-            if src_row == dst_row:
+        # If old and new parent are the same
+        # Only move the node within the children list of this parent
+        if old_parent_node is new_parent_node:
+            if source_row < new_row:
+                new_row -= 1
+            if source_row == new_row:
                 return False
-            elif abs(src_row - dst_row) == 1:
-                if src_row < dst_row:
-                    src_row, dst_row = dst_row, src_row
-                self.beginMoveRows(parent_index, src_row, src_row, parent_index, dst_row)
-                self.moveRow(parent_index, src_row, parent_index, dst_row)
+            elif abs(source_row - new_row) == 1:
+                if source_row < new_row:
+                    source_row, new_row = new_row, source_row
+                self.beginMoveRows(parent_index, source_row, source_row, parent_index, new_row)
+                self.moveRow(parent_index, source_row, parent_index, new_row)
                 self.endMoveRows()
 
-                self.data_changed.emit()
+                self.tree_changed.emit()
                 return True
 
-        self.beginMoveRows(src_parent_index, src_row, src_row, parent_index, dst_row)
-        src_parent.children.pop(src_row)
-        dst_parent.children.insert(dst_row, src_item)
-        src_item.parent = dst_parent
+        # Move node to new parent
+        self.beginMoveRows(old_parent_index, source_row, source_row, parent_index, new_row)
+        old_parent_node.children.pop(source_row)
+        new_parent_node.children.insert(new_row, source_node)
+        source_node.parent = new_parent_node
         self.endMoveRows()
 
-        self.data_changed.emit()
+        # Emit tree changed signal for modification state
+        self.tree_changed.emit()
         return True
 
     # -----------------------------------------------
     # 5. Tree iteration helpers
     # -----------------------------------------------
 
-    def iterate(self, index: QModelIndex, func, depth = 0):
+    def iterate(self, func):
+        root = QModelIndex()
+        return self._iterate(root, func)
+
+    def _iterate(self, index: QModelIndex, func, depth = 0):
         if index.isValid():
             func(index)
 
@@ -441,8 +451,15 @@ class DocumentTreeModel(QAbstractItemModel):
 
         for row in range(row_count):
             for column in range(column_count):
-                self.iterate(self.index(row, column, index), func, depth + 1)
+                self._iterate(self.index(row, column, index), func, depth + 1)
 
-    def iterate_all(self, func):
-        root = QModelIndex()
-        return self.iterate(root, func)
+    def iterate_nodes(self, func):
+        root = self._invisible_root
+        return self._iterate_nodes(root, func)
+
+    def _iterate_nodes(self, node: DocumentNode, func, depth = 0):
+        if node is not self._invisible_root:
+            func(node)
+
+        for child in node.children:
+            self._iterate_nodes(child, func, depth + 1)

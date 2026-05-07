@@ -1,10 +1,10 @@
 from functools import partial
 
-from PyQt6.QtCore import (QObject, pyqtSignal, pyqtSlot, QModelIndex)
+from PyQt6.QtCore import (QObject, pyqtSignal, pyqtSlot)
 from PyQt6.QtGui import (QTextDocument)
 
 from notetree.common.utils.settings import settings
-from notetree.documenttree.treemodel import DocumentMetadata, DocumentTreeModel
+from notetree.documenttree.treemodel import DocumentNode, DocumentTreeModel
 from notetree.project.file import ProjectFile
 from notetree.texteditor.markdown.exporter import MarkdownExporter
 from notetree.texteditor.markdown.importer import MarkdownImporter
@@ -75,11 +75,11 @@ class ProjectSession:
         self.file_cfg: dict | None = None
         self.mod_state = ProjectModificationTracker()
         self.model = DocumentTreeModel()
-        self.documents: dict[int, QTextDocument] = {}
+        self.documents_by_id: dict[int, QTextDocument] = {}
 
         self.model.inserted.connect(self._on_inserted)
         self.model.removed.connect(self._on_removed)
-        self.model.data_changed.connect(self.mod_state.mark_tree_modified)
+        self.model.tree_changed.connect(self.mod_state.mark_tree_modified)
 
     def clear(self):
         # Remove all contents
@@ -106,25 +106,23 @@ class ProjectSession:
         self.model.import_data(self.project)
 
         # Import Markdown notes for each document as QTextDocument
-        def import_markdown(index: QModelIndex):
-            item: DocumentMetadata = index.internalPointer()
-            slot = partial(self.mod_state.set_document_modified, item.id)
-            document = MarkdownImporter(item.notes).document
-            document.setModified(False)
-            document.modificationChanged.connect(slot)
-            self.documents[item.id] = document
-        self.model.iterate_all(import_markdown)
+        def import_markdown(node: DocumentNode):
+            slot = partial(self.mod_state.set_document_modified, node.id)
+            text_doc = MarkdownImporter(node.markdown).document
+            text_doc.setModified(False)
+            text_doc.modificationChanged.connect(slot)
+            self.documents_by_id[node.id] = text_doc
+        self.model.iterate_nodes(import_markdown)
 
         # Clear modification status
         self.mod_state.clear()
 
     def save_to_file(self, filename: str):
         # Export Markdown notes for each document from QTextDocument
-        def export_markdown(index: QModelIndex):
-            item: DocumentMetadata = index.internalPointer()
-            document: QTextDocument = self.documents[item.id]
-            item.notes = MarkdownExporter(document).output
-        self.model.iterate_all(export_markdown)
+        def export_markdown(node: DocumentNode):
+            text_doc: QTextDocument = self.documents_by_id[node.id]
+            node.markdown = MarkdownExporter(text_doc).output
+        self.model.iterate_nodes(export_markdown)
 
         # Save model data (document tree, icons and notes)
         self.model.export_data(self.project)
@@ -136,8 +134,8 @@ class ProjectSession:
             self.file_cfg = self._file_config(filename)
 
         # Mark QTextDocuments as clean after successful save
-        for document in self.documents.values():
-            document.setModified(False)
+        for text_doc in self.documents_by_id.values():
+            text_doc.setModified(False)
 
         # Clear modification status
         self.mod_state.clear()
@@ -147,26 +145,26 @@ class ProjectSession:
             return None
         return self.file_cfg.get('recently opened')
 
-    def set_recently_opened_document(self, item: DocumentMetadata | None):
+    def set_recently_opened_document(self, doc_id: int | None):
         if self.file_cfg is None:
             # No filename available yet
             # Do nothing
             return
-        if item is not None:
-            self.file_cfg['recently opened'] = item.id
+        if doc_id is not None:
+            self.file_cfg['recently opened'] = doc_id
         elif 'recently opened' in self.file_cfg:
             del self.file_cfg['recently opened']
 
-    def document(self, item: DocumentMetadata) -> QTextDocument:
-        return self.documents[item.id]
+    def document(self, doc_id: int) -> QTextDocument:
+        return self.documents_by_id[doc_id]
 
     def _clear_documents(self):
-        for document in self.documents.values():
+        for text_doc in self.documents_by_id.values():
             try:
-                document.modificationChanged.disconnect()
+                text_doc.modificationChanged.disconnect()
             except TypeError:
                 pass
-        self.documents.clear()
+        self.documents_by_id.clear()
 
     def _file_config(self, filename: str):
         file_array: list[dict] = settings.config('file config', [])
@@ -182,24 +180,26 @@ class ProjectSession:
         file_array.append(file_cfg)
         return file_cfg
 
-    def _on_inserted(self, item: DocumentMetadata):
-        # Create an empty QTextDocument object for the newly created metadata
-        document = QTextDocument()
+    def _on_inserted(self, doc_id: int):
+        # Create an empty QTextDocument object for the newly created node
+        text_doc = QTextDocument()
 
         # Connect modification slot
-        slot = partial(self.mod_state.set_document_modified, item.id)
-        document.modificationChanged.connect(slot)
+        slot = partial(self.mod_state.set_document_modified, doc_id)
+        text_doc.modificationChanged.connect(slot)
 
         # Map QTextDocument object to document ID
-        self.documents[item.id] = document
+        self.documents_by_id[doc_id] = text_doc
 
-    def _on_removed(self, item: DocumentMetadata):
-        # Disconnect modification changed slot from document
-        document = self.documents[item.id]
-        try:
-            document.modificationChanged.disconnect()
-        except TypeError:
-            pass
+    def _on_removed(self, doc_ids: list[int]):
+        # Disconnect modification changed slot from documents
+        for doc_id in doc_ids:
+            text_doc = self.documents_by_id[doc_id]
+            try:
+                text_doc.modificationChanged.disconnect()
+            except TypeError:
+                pass
 
-        # Remove QTextDocument from mapping
-        self.documents.pop(item.id)
+        # Remove QTextDocument objects from mapping
+        for doc_id in doc_ids:
+            self.documents_by_id.pop(doc_id)
