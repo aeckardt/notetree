@@ -21,7 +21,7 @@
     <message>
         <location filename="../notetree/documenttree/nodeeditor.py" line="69"/>
         <source>Ok</source>
-        <translation>Ok</translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location filename="../notetree/documenttree/nodeeditor.py" line="73"/>
@@ -98,7 +98,7 @@
     <message>
         <location filename="../notetree/common/widgets/emojipicker.py" line="250"/>
         <source>Ok</source>
-        <translation>Ok</translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location filename="../notetree/common/widgets/emojipicker.py" line="255"/>
@@ -141,7 +141,7 @@
     <message>
         <location filename="../notetree/library/icons/editor.py" line="95"/>
         <source>Ok</source>
-        <translation>Ok</translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location filename="../notetree/library/icons/editor.py" line="100"/>
@@ -156,7 +156,7 @@
     <message>
         <location filename="../notetree/library/icons/editor.py" line="147"/>
         <source>png-file</source>
-        <translation>png-Datei</translation>
+        <translation>PNG-Datei</translation>
     </message>
 </context>
 <context>
@@ -203,7 +203,7 @@
     <message>
         <location filename="../notetree/library/icons/selector.py" line="58"/>
         <source>Ok</source>
-        <translation>Ok</translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location filename="../notetree/library/icons/selector.py" line="62"/>
@@ -239,7 +239,7 @@
     <message>
         <location filename="../notetree/texteditor/widgets/linkeditor.py" line="42"/>
         <source>Ok</source>
-        <translation>Ok</translation>
+        <translation>OK</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/widgets/linkeditor.py" line="47"/>
@@ -413,7 +413,7 @@ Wollen Sie die Änderungen speichern?</translation>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="77"/>
         <source>Undo</source>
-        <translation>Zurück</translation>
+        <translation>Rückgängig machen</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="83"/>
@@ -508,22 +508,22 @@ Wollen Sie die Änderungen speichern?</translation>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1220"/>
         <source>Heading Level 1</source>
-        <translation>Überschrift 1</translation>
+        <translation>Überschrift - Ebene 1</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1222"/>
         <source>Heading Level 2</source>
-        <translation>Überschrift 2</translation>
+        <translation>Überschrift - Ebene 2</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1224"/>
         <source>Heading Level 3</source>
-        <translation>Überschrift 3</translation>
+        <translation>Überschrift - Ebene 3</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1226"/>
         <source>Heading Level 4</source>
-        <translation>Überschrift 4</translation>
+        <translation>Überschrift - Ebene 4</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1228"/>
