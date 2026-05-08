@@ -1181,7 +1181,7 @@ class TextEditorWidget(QWidget):
         self.redo_button = self._add_tool_button('redo', self.textedit.redo_action)
 
         self.pdf_export_button = self._add_ext_tool_button('file-pdf', self.textedit.export_as_pdf,
-                                                           tooltip = self.tr("Export as PDF"))
+                                                           tooltip = self.tr("Export as PDF..."))
 
         self._add_separator()
 
@@ -1232,7 +1232,7 @@ class TextEditorWidget(QWidget):
         self._add_separator()
 
         self.link_button = self._add_ext_tool_button('link', self.textedit.insert_hyperlink,
-                                                     tooltip = self.tr("Insert link"))
+                                                     tooltip = self.tr("Insert link..."))
         self.emoji_button = self._add_tool_button('face-grin', self.textedit.insert_emoji_action)
 
         self._add_separator()

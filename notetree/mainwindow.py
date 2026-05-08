@@ -293,10 +293,10 @@ class MainWindow(QMainWindow):
         try:
             self.session.load_from_file(filename)
         except ProjectFileVersionError as e:
-            show_error_msg(f"{self.tr("Unsupported file version.")}\n\n{str(e)}", self)
+            show_error_msg(f"{self.tr('Unsupported file version.')}\n\n{str(e)}", self)
             return
         except ProjectFileFormatError as e:
-            show_error_msg(f"{self.tr("An error occurred while reading the project file.")}\n\n{str(e)}", self)
+            show_error_msg(f"{self.tr('An error occurred while reading the project file.')}\n\n{str(e)}", self)
             return
 
         # Load ID of recently opened document from global settings
@@ -345,8 +345,8 @@ class MainWindow(QMainWindow):
         self.session.save_to_file(filename)
 
         # Save ID of recently opened document to global settings
-        meta = self._get_document_metadata(self.document_tree.selected_index)
-        self.session.set_recently_opened_document(meta.id)
+        node = self._get_document_node(self.document_tree.selected_index)
+        self.session.set_recently_opened_document(node.id)
 
         # Update recent files list
         self._append_to_recent_files_list(filename)
@@ -426,19 +426,19 @@ class MainWindow(QMainWindow):
         self._open_document(selected)
 
     def _open_document(self, index: QModelIndex):
-        meta = self._get_document_metadata(index)
-        if meta is not None:
-            document = self.session.document(meta.id)
+        node = self._get_document_node(index)
+        if node is not None:
+            document = self.session.document(node.id)
             self.editor.textedit.set_document(document)
             self.editor.setEnabled(True)
             self.table_of_contents.set_text_document(document)
+            self.session.set_recently_opened_document(node.id)
         else:
             # Clear all contents
             self.editor.textedit.clear()
             self.editor.setEnabled(False)
             self.table_of_contents.clear()
-
-        self.session.set_recently_opened_document(meta.id)
+            self.session.set_recently_opened_document(None)
 
     # -----------------------------------------------
     # 7. Private methods - TableOfConents slots
@@ -466,7 +466,7 @@ class MainWindow(QMainWindow):
     # 8. Static/Utility Methods
     # -----------------------------------------------
 
-    def _get_document_metadata(self, index: QModelIndex) -> DocumentNode | None:
+    def _get_document_node(self, index: QModelIndex) -> DocumentNode | None:
         if index.isValid():
             return index.internalPointer()
         return None
