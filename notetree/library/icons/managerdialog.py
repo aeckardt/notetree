@@ -6,7 +6,7 @@ from notetree.library.icons.model import IconModel
 from notetree.library.icons.tablewidget import IconTableWidget
 
 class IconManagerDialog(QDialog):
-    def __init__(self, window_title = 'Icon Manager'):
+    def __init__(self, window_title):
         QDialog.__init__(self)
 
         layout = QVBoxLayout()

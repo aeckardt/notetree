@@ -22,7 +22,7 @@ class DocumentNodeEditorDialog(QDialog):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(5)
 
-        description_label = QLabel('Beschreibung')
+        description_label = QLabel(self.tr("Description"))
         layout.addWidget(description_label)
         self.description_edit = QLineEdit()
         layout.addWidget(self.description_edit)
@@ -51,11 +51,11 @@ class DocumentNodeEditorDialog(QDialog):
 
         icon_layout.addWidget(self.icon_widget)
 
-        self.select_button = GradientButton(text=' Auswählen ')
+        self.select_button = GradientButton(text=f" {self.tr("Select")} ")
         self.select_button.clicked.connect(self._on_select_clicked)
         icon_layout.addWidget(self.select_button)
 
-        self.remove_button = GradientButton(text=' Löschen ')
+        self.remove_button = GradientButton(text=f" {self.tr("Remove")} ")
         self.remove_button.clicked.connect(self._on_remove_clicked)
         icon_layout.addWidget(self.remove_button)
 
@@ -66,11 +66,11 @@ class DocumentNodeEditorDialog(QDialog):
         button_layout.setContentsMargins(0, 0, 0, 0)
         button_layout.setSpacing(5)
         button_layout.addStretch(1)
-        ok_button = QPushButton("Ok")
+        ok_button = QPushButton(self.tr("Ok"))
         ok_button.clicked.connect(self.accept)
         ok_button.setMinimumWidth(120)
         button_layout.addWidget(ok_button)
-        cancel_button = QPushButton("Abbrechen")
+        cancel_button = QPushButton(self.tr("Cancel"))
         cancel_button.clicked.connect(self.reject)
         cancel_button.setMinimumWidth(120)
         button_layout.addWidget(cancel_button)
@@ -108,7 +108,7 @@ class DocumentNodeEditorDialog(QDialog):
         self._update_icon()
 
     def _on_select_clicked(self):
-        isd = IconSelectorDialog('Icon auswählen', self.icon_index, allow_empty=True)
+        isd = IconSelectorDialog(self.tr("Select icon"), self.icon_index, allow_empty=True)
         if isd.exec() == QDialog.DialogCode.Accepted:
             self.icon_index = isd.icon_index
             self._update_icon()

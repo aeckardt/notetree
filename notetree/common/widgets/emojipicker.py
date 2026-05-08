@@ -247,12 +247,12 @@ class EmojiPickerDialog(QDialog):
 
         button_layout.addStretch(1)
 
-        ok_button = QPushButton("Ok")
+        ok_button = QPushButton(self.tr("Ok"))
         ok_button.clicked.connect(self.accept)
         ok_button.setMinimumWidth(120)
         button_layout.addWidget(ok_button)
 
-        cancel_button = QPushButton("Abbrechen")
+        cancel_button = QPushButton(self.tr("Cancel"))
         cancel_button.clicked.connect(self.reject)
         cancel_button.setMinimumWidth(120)
         button_layout.addWidget(cancel_button)
@@ -269,7 +269,7 @@ class EmojiPickerDialog(QDialog):
 
     def accept(self):
         if self.emoji_picker.index == -1:
-            show_error_msg('Es wurde kein Emoji ausgewählt', self)
+            show_error_msg(self.tr("No emoji has been selected."), self)
             return
 
         settings.save_geometry(self)

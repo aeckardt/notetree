@@ -98,31 +98,31 @@ class DocumentTreeWidget(QWidget):
             if DocumentTreeWidget.Button.AddButton in self.buttons:
                 self.add_button = GradientButton(QImage("icons/fugue/plus.png", "PNG"))
                 self.add_button.clicked.connect(self._on_add_clicked)
-                self.add_button.setToolTip('Neuer Knoten (Strg+N)')
+                self.add_button.setToolTip(self.tr("Insert node (Ctrl+N)"))
                 button_layout.addWidget(self.add_button)
 
             if DocumentTreeWidget.Button.RemoveButton in self.buttons:
                 self.remove_button = GradientButton(QImage("icons/fugue/minus.png", "PNG"))
                 self.remove_button.clicked.connect(self._on_remove_clicked)
-                self.remove_button.setToolTip('Knoten löschen (Strg+D)')
+                self.remove_button.setToolTip(self.tr("Remove node (Ctrl+D)"))
                 button_layout.addWidget(self.remove_button)
 
             if DocumentTreeWidget.Button.EditButton in self.buttons:
                 self.edit_button = GradientButton(QImage("icons/fugue/pencil.png", "PNG"))
                 self.edit_button.clicked.connect(self._on_edit_clicked)
-                self.edit_button.setToolTip('Knoten bearbeiten (Strg+E)')
+                self.edit_button.setToolTip(self.tr("Edit node (Ctrl+E)"))
                 button_layout.addWidget(self.edit_button)
 
             if DocumentTreeWidget.Button.MoveUpButton in self.buttons:
                 self.moveup_button = GradientButton(QImage("icons/fugue/arrow-090.png", "PNG"))
                 self.moveup_button.clicked.connect(self._on_moveup_clicked)
-                self.moveup_button.setToolTip('Mit oberen Nachbarknoten tauschen (Strg+Oben)')
+                self.moveup_button.setToolTip(self.tr("Swap with neighbor above (Ctrl+Up)"))
                 button_layout.addWidget(self.moveup_button)
 
             if DocumentTreeWidget.Button.MoveDownButton in self.buttons:
                 self.movedown_button = GradientButton(QImage("icons/fugue/arrow-270.png", "PNG"))
                 self.movedown_button.clicked.connect(self._on_movedown_clicked)
-                self.movedown_button.setToolTip('Mit unteren Nachbarknoten tauschen (Strg+Unten)')
+                self.movedown_button.setToolTip(self.tr("Swap with neighbor below (Ctrl+Down)"))
                 button_layout.addWidget(self.movedown_button)
 
             button_layout.addStretch(1)
@@ -143,14 +143,14 @@ class DocumentTreeWidget(QWidget):
     # Overrideable methods
     def add_row(self):
         new_node = DocumentNode()
-        ned = DocumentNodeEditorDialog('Füge neuen Knoten hinzu...', new_node)
+        ned = DocumentNodeEditorDialog(self.tr("Insert node..."), new_node)
         if ned.exec() == QDialog.DialogCode.Accepted:
             self.model.insert_child_node(new_node, self.selected_index)
 
     def edit_row(self):
         node: DocumentNode = self.selected_index.internalPointer()
 
-        editor = DocumentNodeEditorDialog('Bearbeite Knoten...', node)
+        editor = DocumentNodeEditorDialog(self.tr("Edit node..."), node)
         if editor.exec() == QDialog.DialogCode.Accepted:
             self.model.update_index(self.selected_index)
             self.model.tree_changed.emit()
@@ -205,12 +205,12 @@ class DocumentTreeWidget(QWidget):
         if self.Flag.ConfirmationPrompt in self.flags:
             # Prompt for confirmation
             msgbox = QMessageBox(self.window())
-            msgbox.setWindowTitle("Bestätigung")
-            msgbox.setText("Wollen Sie den Knoten wirklich löschen?")
+            msgbox.setWindowTitle(self.tr("Confirmation"))
+            msgbox.setText(self.tr("Do you really want to remove the node?"))
             msgbox.setStandardButtons(QMessageBox.StandardButton.Yes)
             msgbox.addButton(QMessageBox.StandardButton.No)
-            msgbox.button(QMessageBox.StandardButton.Yes).setText("Ja")
-            msgbox.button(QMessageBox.StandardButton.No).setText("Nein")
+            msgbox.button(QMessageBox.StandardButton.Yes).setText(self.tr("Yes"))
+            msgbox.button(QMessageBox.StandardButton.No).setText(self.tr("No"))
             msgbox.setDefaultButton(QMessageBox.StandardButton.Yes)
             if msgbox.exec() == QMessageBox.StandardButton.No:
                 return
@@ -311,7 +311,7 @@ class DocumentTreeWidget(QWidget):
             return QTreeView.mouseDoubleClickEvent(self.treeview, event)
 
         node: DocumentNode = index.internalPointer()
-        editor = DocumentNodeEditorDialog('Bearbeite Knoten...', node)
+        editor = DocumentNodeEditorDialog(self.tr("Edit node..."), node)
         if editor.exec() == QDialog.DialogCode.Accepted:
             self.model.update_index(index)
             self.model.tree_changed.emit()

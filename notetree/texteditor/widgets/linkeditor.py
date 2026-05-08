@@ -14,7 +14,7 @@ class LinkEditorDialog(QDialog):
         captionLayout.setContentsMargins(0, 0, 0, 0)
         captionLayout.setSpacing(5)
 
-        captionLayout.addWidget(QLabel('Angezeigter Text'))
+        captionLayout.addWidget(QLabel(self.tr("Displayed text")))
 
         self.caption_edit = QLineEdit()
         captionLayout.addWidget(self.caption_edit)
@@ -39,12 +39,12 @@ class LinkEditorDialog(QDialog):
 
         buttonLayout.addStretch(1)
 
-        okButton = QPushButton("Ok")
+        okButton = QPushButton(self.tr("Ok"))
         okButton.clicked.connect(self.accept)
         okButton.setMinimumWidth(120)
         buttonLayout.addWidget(okButton)
 
-        cancelButton = QPushButton("Abbrechen")
+        cancelButton = QPushButton(self.tr("Cancel"))
         cancelButton.clicked.connect(self.reject)
         cancelButton.setMinimumWidth(120)
         buttonLayout.addWidget(cancelButton)

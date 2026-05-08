@@ -19,8 +19,6 @@ from notetree.common.widgets.emojipicker import EmojiPickerDialog
 from notetree.common.widgets.gradientbutton import GradientButton
 from notetree.texteditor.html.exporter import HtmlExporter
 from notetree.texteditor.html.importer import HtmlImporter
-from notetree.texteditor.markdown.exporter import MarkdownExporter
-from notetree.texteditor.markdown.importer import MarkdownImporter
 from notetree.texteditor.style import *
 from notetree.texteditor.widgets.linkeditor import LinkEditorDialog
 from notetree.texteditor.widgets.toolbarseparator import ToolBarSeparator
@@ -76,77 +74,77 @@ class TextEditor(QTextEdit):
         self._keep_cursor_x = False
 
     def _setup_actions(self):
-        self.undo_action = QAction('Zurück', self)
+        self.undo_action = QAction(self.tr("Undo"), self)
         self.undo_action.setEnabled(False)
         self.undo_action.setShortcut(QKeySequence('Ctrl+Z'))
         self.undoAvailable.connect(self.undo_action.setEnabled)
         self.undo_action.triggered.connect(self.undo)
 
-        self.redo_action = QAction('Wiederholen', self)
+        self.redo_action = QAction(self.tr("Redo"), self)
         self.redo_action.setEnabled(False)
         self.redo_action.setShortcut(QKeySequence('Ctrl+Shift+Z'))
         self.redoAvailable.connect(self.redo_action.setEnabled)
         self.redo_action.triggered.connect(self.redo)
 
-        self.cut_action = QAction('Ausschneiden', self)
+        self.cut_action = QAction(self.tr("Cut"), self)
         self.cut_action.setEnabled(False)
         self.cut_action.triggered.connect(self.cut)
 
-        self.copy_action = QAction('Kopieren', self)
+        self.copy_action = QAction(self.tr("Copy"), self)
         self.copy_action.setEnabled(False)
         self.copy_action.triggered.connect(self.copy)
 
-        self.paste_action = QAction('Einfügen', self)
+        self.paste_action = QAction(self.tr("Paste"), self)
         self.paste_action.setEnabled(self.canPaste())
         QGuiApplication.clipboard().dataChanged.connect(self._clipboard_update)
         self.paste_action.triggered.connect(self.paste)
 
-        self.delete_action = QAction('Entfernen', self)
+        self.delete_action = QAction(self.tr("Delete"), self)
         self.delete_action.setEnabled(False)
         self.delete_action.triggered.connect(self.textCursor().removeSelectedText)
 
-        self.text_bold_action = QAction('Fett', self)
+        self.text_bold_action = QAction(self.tr("Bold"), self)
         self.text_bold_action.setCheckable(True)
         self.text_bold_action.setShortcut(QKeySequence('Ctrl+B'))
         self.text_bold_action.triggered.connect(self.toggle_bold)
         self.addAction(self.text_bold_action)
 
-        self.text_italic_action = QAction('Kursiv', self)
+        self.text_italic_action = QAction(self.tr("Italic"), self)
         self.text_italic_action.setCheckable(True)
         self.text_italic_action.setShortcut(QKeySequence('Ctrl+I'))
         self.text_italic_action.triggered.connect(self.toggle_italic)
         self.addAction(self.text_italic_action)
 
-        self.text_underline_action = QAction('Unterstrichen', self)
+        self.text_underline_action = QAction(self.tr("Underline"), self)
         self.text_underline_action.setCheckable(True)
         self.text_underline_action.setShortcut(QKeySequence('Ctrl+U'))
         self.text_underline_action.triggered.connect(self.toggle_underline)
         self.addAction(self.text_underline_action)
 
-        self.textsize_plus_action = QAction('Text vergrößern', self)
+        self.textsize_plus_action = QAction(self.tr("Increase font size"), self)
         self.textsize_plus_action.setShortcut(QKeySequence('Ctrl++'))
         self.textsize_plus_action.triggered.connect(self._textsize_plus)
         self.addAction(self.textsize_plus_action)
 
-        self.textsize_minus_action = QAction('Text verkleinern', self)
+        self.textsize_minus_action = QAction(self.tr("Decrease font size"), self)
         self.textsize_minus_action.setShortcut(QKeySequence('Ctrl+-'))
         self.textsize_minus_action.triggered.connect(self._textsize_minus)
         self.addAction(self.textsize_minus_action)
 
-        self.less_indent_action = QAction('Einzug verkleinern', self)
+        self.less_indent_action = QAction(self.tr("Less indent"), self)
         self.less_indent_action.setShortcut(QKeySequence('Shift+Tab'))
         self.less_indent_action.triggered.connect(self.unindent_selection)
 
-        self.more_indent_action = QAction('Einzug vergrößern', self)
+        self.more_indent_action = QAction(self.tr("More indent"), self)
         self.more_indent_action.setShortcut(QKeySequence('Tab'))
         self.more_indent_action.triggered.connect(self.indent_selection)
 
         self._link_for_editing: Hyperlink = None
-        self.edit_link_action = QAction('Link bearbeiten', self)
+        self.edit_link_action = QAction(self.tr("Edit link"), self)
         self.edit_link_action.setEnabled(False)
         self.edit_link_action.triggered.connect(self.edit_hyperlink)
 
-        self.insert_emoji_action = QAction('Emoji einfügen', self)
+        self.insert_emoji_action = QAction(self.tr("Insert emoji"), self)
         self.insert_emoji_action.setShortcut(QKeySequence('Ctrl+E'))
         self.insert_emoji_action.triggered.connect(self.insert_emoji)
         self.addAction(self.insert_emoji_action)
@@ -325,7 +323,7 @@ class TextEditor(QTextEdit):
             self.edit_hyperlink()
             return
 
-        editor = LinkEditorDialog("Link einfügen")
+        editor = LinkEditorDialog(self.tr("Insert link"))
         if editor.exec() == QDialog.DialogCode.Accepted:
             # Add hyperlink with specific char format
             fmt = cursor.charFormat()
@@ -343,7 +341,7 @@ class TextEditor(QTextEdit):
             self.mergeCurrentCharFormat(fmt)
 
     def edit_hyperlink(self):
-        editor = LinkEditorDialog("Link bearbeiten")
+        editor = LinkEditorDialog(self.tr("Edit link"))
 
         anchor: Hyperlink = self.edit_link_action.data()
         editor.link_url_edit.setText(anchor.href)
@@ -369,7 +367,7 @@ class TextEditor(QTextEdit):
 
     @pyqtSlot()
     def insert_emoji(self):
-        editor = EmojiPickerDialog('Emoji einfügen')
+        editor = EmojiPickerDialog(self.tr("Insert emoji"))
         if editor.exec() == QDialog.DialogCode.Accepted:
             emoji = editor.emoji_picker.selected_emoji()
             self.textCursor().insertText(emoji)
@@ -748,7 +746,7 @@ class TextEditor(QTextEdit):
         cursor.endEditBlock()
 
         # Open file dialog
-        file_dialog = QFileDialog(self, "Exportiere als PDF")
+        file_dialog = QFileDialog(self, self.tr("Export as PDF"))
         file_dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
         file_dialog.setMimeTypeFilters(["application/pdf"])
         file_dialog.setDefaultSuffix("pdf")
@@ -1183,7 +1181,7 @@ class TextEditorWidget(QWidget):
         self.redo_button = self._add_tool_button('redo', self.textedit.redo_action)
 
         self.pdf_export_button = self._add_ext_tool_button('file-pdf', self.textedit.export_as_pdf,
-                                                           tooltip = 'Als PDF exportieren')
+                                                           tooltip = self.tr("Export as PDF"))
 
         self._add_separator()
 
@@ -1219,22 +1217,22 @@ class TextEditorWidget(QWidget):
 
         # Block styles
         self.heading_lvl1_button = self._add_ext_tool_button('heading1', lambda: self._set_heading_level(1),
-                                                             checkable = True, tooltip = 'Heading Level 1')
+                                                             checkable = True, tooltip = self.tr("Heading Level 1"))
         self.heading_lvl2_button = self._add_ext_tool_button('heading2', lambda: self._set_heading_level(2),
-                                                             checkable = True, tooltip = 'Heading Level 2')
+                                                             checkable = True, tooltip = self.tr("Heading Level 2"))
         self.heading_lvl3_button = self._add_ext_tool_button('heading3', lambda: self._set_heading_level(3),
-                                                             checkable = True, tooltip = 'Heading Level 3')
+                                                             checkable = True, tooltip = self.tr("Heading Level 3"))
         self.heading_lvl4_button = self._add_ext_tool_button('heading4', lambda: self._set_heading_level(4),
-                                                             checkable = True, tooltip = 'Heading Level 4')
+                                                             checkable = True, tooltip = self.tr("Heading Level 4"))
         self.list_button = self._add_ext_tool_button('list_ul', self.textedit.toggle_list, checkable = True,
-                                                     tooltip = 'Liste')
+                                                     tooltip = self.tr("List"))
         self.remove_style_button = self._add_ext_tool_button('font', self.textedit.remove_block_style,
-                                                             tooltip = 'Standard Blockformat')
+                                                             tooltip = self.tr("Standard Blockformat"))
 
         self._add_separator()
 
         self.link_button = self._add_ext_tool_button('link', self.textedit.insert_hyperlink,
-                                                     tooltip = 'Link einfügen')
+                                                     tooltip = self.tr("Insert link"))
         self.emoji_button = self._add_tool_button('face-grin', self.textedit.insert_emoji_action)
 
         self._add_separator()
@@ -1276,7 +1274,7 @@ class TextEditorWidget(QWidget):
         else:
             # The button is automatically unchecked after being clicked
             # That's why it's necessary to set it to checked again
-            # As long as the blockFormat has the according headingLevel
+            # as long as the blockFormat has the according headingLevel
             match level:
                 case 1:
                     self.heading_lvl1_button.set_checked(True)

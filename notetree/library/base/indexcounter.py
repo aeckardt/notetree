@@ -3,9 +3,6 @@ import json
 
 class IndexCounter:
     class Type(int):
-        Source = 1
-        Keyword = 2
-        Reference = 3
         Icon = 4
 
     def __init__(self):
@@ -45,9 +42,6 @@ class IndexCounter:
 
     def _key(self, type: Type):
         return {
-            IndexCounter.Type.Source: 'sources',
-            IndexCounter.Type.Keyword: 'keywords',
-            IndexCounter.Type.Reference: 'references',
             IndexCounter.Type.Icon: 'icons'
         }[type]
 

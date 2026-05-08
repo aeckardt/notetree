@@ -27,7 +27,7 @@ class IconEditorDialog(QDialog):
         name_layout.setContentsMargins(0, 0, 0, 0)
         name_layout.setSpacing(5)
 
-        name_layout.addWidget(QLabel("Bezeichnung"))
+        name_layout.addWidget(QLabel(self.tr("Description")))
         self.name_edit = QLineEdit()
         self.name_edit.setMinimumWidth(350)
         name_layout.addWidget(self.name_edit)
@@ -49,19 +49,19 @@ class IconEditorDialog(QDialog):
         self.open_button.clicked.connect(self._open_file_clicked)
         path_row_layout.addWidget(self.open_button)
 
-        path_layout.addWidget(QLabel("Dateipfad"))
+        path_layout.addWidget(QLabel(self.tr("Path")))
         path_layout.addLayout(path_row_layout)
 
         design_layout = QVBoxLayout()
         design_layout.setContentsMargins(0, 0, 0, 0)
         design_layout.setSpacing(5)
 
-        design_layout.addWidget(QLabel('Design'))
+        design_layout.addWidget(QLabel(self.tr("Design")))
 
         self.button_group = QButtonGroup()
-        self.standard_design_radiobutton = QRadioButton("Standard Design")
+        self.standard_design_radiobutton = QRadioButton(self.tr("Standard Design"))
         self.button_group.addButton(self.standard_design_radiobutton, 0)
-        self.flat_design_radiobutton = QRadioButton("Flat Design")
+        self.flat_design_radiobutton = QRadioButton(self.tr("Flat Design"))
         self.button_group.addButton(self.flat_design_radiobutton, 1)
         design_layout.addWidget(self.standard_design_radiobutton)
         design_layout.addWidget(self.flat_design_radiobutton)
@@ -92,12 +92,12 @@ class IconEditorDialog(QDialog):
 
         button_layout.addStretch(1)
 
-        ok_button = QPushButton("Ok")
+        ok_button = QPushButton(self.tr("Ok"))
         ok_button.clicked.connect(self.accept)
         ok_button.setMinimumWidth(120)
         button_layout.addWidget(ok_button)
 
-        cancel_button = QPushButton("Abbrechen")
+        cancel_button = QPushButton(self.tr("Cancel"))
         cancel_button.clicked.connect(self.reject)
         cancel_button.setMinimumWidth(120)
         button_layout.addWidget(cancel_button)
@@ -143,7 +143,8 @@ class IconEditorDialog(QDialog):
                 self.flat_design_radiobutton.setChecked(True)
 
     def _open_file_clicked(self):
-        filename, _ = QFileDialog.getOpenFileName(self, "Öffne Billdatei", "icons", "png-Datei (*.png)",
+        filename, _ = QFileDialog.getOpenFileName(self, self.tr("Open Image"), "icons",
+                                                  self.tr("png-file") + " (*.png)",
                                                   options=QFileDialog.Option.DontUseNativeDialog)
 
         if filename != '':

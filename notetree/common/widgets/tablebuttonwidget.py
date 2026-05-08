@@ -81,19 +81,19 @@ class TableButtonWidget(QWidget):
             if TableButtonWidget.Button.AddButton in self.buttons:
                 self.add_button = GradientButton(QImage("icons/fugue/plus.png", "PNG"))
                 self.add_button.clicked.connect(self._on_add_clicked)
-                self.add_button.setToolTip('Neuer Eintrag (Strg+N)')
+                self.add_button.setToolTip(self.tr("New entry (Ctrl+N)"))
                 button_layout.addWidget(self.add_button)
 
             if TableButtonWidget.Button.RemoveButton in self.buttons:
                 self.remove_button = GradientButton(QImage("icons/fugue/minus.png", "PNG"))
                 self.remove_button.clicked.connect(self._on_remove_clicked)
-                self.remove_button.setToolTip('Eintrag löschen (Strg+D)')
+                self.remove_button.setToolTip(self.tr("Remove entry (Ctrl+D)"))
                 button_layout.addWidget(self.remove_button)
 
             if TableButtonWidget.Button.EditButton in self.buttons:
                 self.edit_button = GradientButton(QImage("icons/fugue/pencil.png", "PNG"))
                 self.edit_button.clicked.connect(self._on_edit_clicked)
-                self.edit_button.setToolTip('Eintrag bearbeiten (Strg+E)')
+                self.edit_button.setToolTip(self.tr("Edit entry (Ctrl+E)"))
                 button_layout.addWidget(self.edit_button)
 
             button_layout.addStretch(1)
@@ -147,12 +147,12 @@ class TableButtonWidget(QWidget):
         if self.Flag.ConfirmationPrompt in self.flags:
             # Prompt for confirmation
             msgbox = QMessageBox(self.window())
-            msgbox.setWindowTitle("Bestätigung")
-            msgbox.setText("Wollen Sie den Eintrag wirklich löschen?")
+            msgbox.setWindowTitle(self.tr("Confirmation"))
+            msgbox.setText(self.tr("Do you really want to remove the entry?"))
             msgbox.setStandardButtons(QMessageBox.StandardButton.Yes)
             msgbox.addButton(QMessageBox.StandardButton.No)
-            msgbox.button(QMessageBox.StandardButton.Yes).setText("Ja")
-            msgbox.button(QMessageBox.StandardButton.No).setText("Nein")
+            msgbox.button(QMessageBox.StandardButton.Yes).setText(self.tr("Yes"))
+            msgbox.button(QMessageBox.StandardButton.No).setText(self.tr("No"))
             msgbox.setDefaultButton(QMessageBox.StandardButton.Yes)
             if msgbox.exec() == QMessageBox.StandardButton.No:
                 return

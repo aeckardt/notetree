@@ -4,7 +4,7 @@ from PyQt6.QtCore import (QMetaObject, Qt, QItemSelectionModel, QModelIndex, QCo
                           QFileInfo, pyqtSlot)
 from PyQt6.QtGui import (QCloseEvent, QKeySequence, QAction)
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QSplitter, QMessageBox, QMenuBar, QMenu,
-                             QFileDialog, QTreeView)
+                             QFileDialog)
 
 from notetree.common.utils.errormessage import show_error_msg
 from notetree.common.utils.settings import settings
@@ -51,14 +51,14 @@ class MainWindow(QMainWindow):
         self.v_splitter = QSplitter()
         self.v_splitter.setOrientation(Qt.Orientation.Vertical)
 
-        self.document_tree = DocumentTreeWidget('Struktur', model=self.model)
+        self.document_tree = DocumentTreeWidget(self.tr("Structure"), model=self.model)
         self.document_tree.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.treeview = self.document_tree.treeview
         self.v_splitter.addWidget(self.document_tree)
 
         self.document_tree.selection_changed.connect(self._on_selection_changed, Qt.ConnectionType.DirectConnection)
 
-        self.table_of_contents = TableOfContents('Gliederung')
+        self.table_of_contents = TableOfContents(self.tr("Outline"))
         self.table_of_contents.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.v_splitter.addWidget(self.table_of_contents)
 
@@ -89,7 +89,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         self._setup_menu()
-        self.setWindowTitle("NoteTree")
+        self.setWindowTitle(self.tr("NoteTree"))
 
         QMetaObject.connectSlotsByName(self)
 
@@ -112,27 +112,27 @@ class MainWindow(QMainWindow):
         # New action
         self.new_action = QAction(self)
         self.new_action.setObjectName("NewAction")
-        self.new_action.setText("Neue Datei...")
+        self.new_action.setText(self.tr("New File..."))
         self.new_action.setShortcut(QKeySequence.StandardKey.New)
         self.new_action.triggered.connect(self._on_new)
 
         # Open action
         self.open_action = QAction(self)
         self.open_action.setObjectName("openAction")
-        self.open_action.setText("Öffnen...")
+        self.open_action.setText(self.tr("Open..."))
         self.open_action.setShortcut(QKeySequence.StandardKey.Open)
         self.open_action.triggered.connect(self._on_open)
 
         # Open recent action
         self.recent_files_menu = QMenu(self.file_menu)
         self.recent_files_menu.setObjectName("menuRecentFiles")
-        self.recent_files_menu.setTitle("Zuletzt geöffnet")
+        self.recent_files_menu.setTitle(self.tr("Open Recent"))
         self._setup_recent_file_actions()
 
         # Save action
         self.save_action = QAction(self)
         self.save_action.setObjectName("saveAction")
-        self.save_action.setText("Speichern")
+        self.save_action.setText(self.tr("Save"))
         self.save_action.setEnabled(False)
         self.save_action.setShortcut(QKeySequence.StandardKey.Save)
         self.mod_state.changed.connect(self.save_action.setEnabled)
@@ -141,20 +141,21 @@ class MainWindow(QMainWindow):
         # Save As action
         self.save_as_action = QAction(self)
         self.save_as_action.setObjectName("saveAsAction")
-        self.save_as_action.setText("Speichern als...")
+        self.save_as_action.setText(self.tr("Save As..."))
         self.save_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
         self.save_as_action.triggered.connect(self._on_save_as)
 
         # Exit action
         self.exit_action = QAction(self)
         self.exit_action.setObjectName("exitAction")
-        self.exit_action.setText("Beenden")
+        self.exit_action.setText(self.tr("Exit"))
+        self.exit_action.setMenuRole(QAction.MenuRole.QuitRole)
         self.exit_action.setShortcut(QKeySequence.StandardKey.Quit)
         self.exit_action.triggered.connect(self.close)
 
         # Assemble file menu
         self.file_menu.setObjectName("menuFile")
-        self.file_menu.setTitle("Datei")
+        self.file_menu.setTitle(self.tr("File"))
         self.file_menu.addAction(self.new_action)
         self.file_menu.addAction(self.open_action)
         self.file_menu.addMenu(self.recent_files_menu)
@@ -170,13 +171,13 @@ class MainWindow(QMainWindow):
         # Edit Icons action
         self.edit_icons_action = QAction(self)
         self.edit_icons_action.setObjectName("edit_icons")
-        self.edit_icons_action.setText("Icons")
+        self.edit_icons_action.setText(self.tr("Icons"))
         self.edit_icons_action.setShortcut("Ctrl+Shift+I")
         self.edit_icons_action.triggered.connect(self._on_edit_icons)
 
         # Assemble edit menu
         self.edit_menu.setObjectName("menuEdit")
-        self.edit_menu.setTitle("Bearbeiten")
+        self.edit_menu.setTitle(self.tr("Edit"))
         self.edit_menu.addAction(self.edit_icons_action)
         self.menubar.addAction(self.edit_menu.menuAction())
 
@@ -230,7 +231,7 @@ class MainWindow(QMainWindow):
 
         self.session.clear()
         self._open_document(QModelIndex())
-        self.setWindowTitle('NoteTree')
+        self.setWindowTitle(self.tr("NoteTree"))
 
     @pyqtSlot()
     def _on_open(self):
@@ -240,7 +241,7 @@ class MainWindow(QMainWindow):
             return
 
         # Open file dialog to select file
-        file_path, _ = QFileDialog.getOpenFileName(self, 'Projekt öffnen', None, "Projekte (*.json)")
+        file_path, _ = QFileDialog.getOpenFileName(self, self.tr("Open project"), None, self.tr("Projects") + " (*.json)")
 
         # If a file has been selected, the file path should contain at least one character
         if len(file_path) > 0:
@@ -257,7 +258,7 @@ class MainWindow(QMainWindow):
         try:
             self._open_file(sender.data())
         except FileNotFoundError:
-            show_error_msg('Die Datei konnte nicht gefunden werden.', self)
+            show_error_msg(self.tr("The file could not be found."), self)
 
             # Remove entry from recent files
             self.recent_file_paths.pop(index)
@@ -274,7 +275,7 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def _on_edit_icons(self):
-        editor = IconManagerDialog('Icons bearbeiten')
+        editor = IconManagerDialog(self.tr("Edit icons"))
         editor.exec()
 
     # -----------------------------------------------
@@ -292,10 +293,10 @@ class MainWindow(QMainWindow):
         try:
             self.session.load_from_file(filename)
         except ProjectFileVersionError as e:
-            show_error_msg(f"Nicht unterstützte Dateiversion.\n\n{str(e)}", self)
+            show_error_msg(f"{self.tr("Unsupported file version.")}\n\n{str(e)}", self)
             return
         except ProjectFileFormatError as e:
-            show_error_msg(f"Fehler beim Lesen der Projektdatei.\n\n{str(e)}", self)
+            show_error_msg(f"{self.tr("An error occurred while reading the project file.")}\n\n{str(e)}", self)
             return
 
         # Load ID of recently opened document from global settings
@@ -319,7 +320,7 @@ class MainWindow(QMainWindow):
 
         # Change window title according to filename
         stripped_name = QFileInfo(filename).fileName()
-        self.setWindowTitle(f'NoteTree - {stripped_name}')
+        self.setWindowTitle(self.tr("NoteTree") + f" - {stripped_name}")
 
         # Pass on file directory to treeview and notes_edit
         root_directory = pathlib.Path(filename).parent.resolve()
@@ -332,7 +333,7 @@ class MainWindow(QMainWindow):
     def _save_to_file(self, prompt_filename: bool = False) -> bool:
         if self.session.filename is None or prompt_filename:
             # Open file dialog to specify path for new file
-            filename, _ = QFileDialog.getSaveFileName(self, 'Projekt speichern', None, "Projekte (*.json)")
+            filename, _ = QFileDialog.getSaveFileName(self, self.tr("Save project"), None, self.tr("Projects") + " (*.json)")
 
             if len(filename) == 0:
                 # No file has been specified
@@ -368,11 +369,11 @@ class MainWindow(QMainWindow):
 
         # Setup MessageBox
         msgbox = QMessageBox(QMessageBox.Icon.Warning, QCoreApplication.applicationName(),
-                             "Das aktuelle Projekt wurde geändert.\nWollen Sie die Änderungen speichern?",
+                             self.tr("The current project has been modified.\nDo you want to save your changes?"),
                              Button.Save | Button.Discard | Button.Cancel, self)
-        msgbox.button(Button.Save).setText('&Speichern')
-        msgbox.button(Button.Discard).setText('&Verwerfen')
-        msgbox.button(Button.Cancel).setText('&Abbrechen')
+        msgbox.button(Button.Save).setText(self.tr("&Save"))
+        msgbox.button(Button.Discard).setText(self.tr("&Discard"))
+        msgbox.button(Button.Cancel).setText(self.tr("&Cancel"))
 
         # Execute MessageBox with return value 'msgId'
         msg_id = msgbox.exec()

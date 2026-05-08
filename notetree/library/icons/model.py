@@ -11,9 +11,9 @@ class IconModel(IndexedTableModel):
     def __init__(self):
         super().__init__(icons)
 
-        self.add_column('Name',      'name',   ColumnFormat.String)
-        self.add_column('Design',    'design', ColumnFormat.String)
-        self.add_column('Dateiname', 'path',   ColumnFormat.String)
+        self.add_column(self.tr("Name"),   'name',   ColumnFormat.String)
+        self.add_column(self.tr("Design"), 'design', ColumnFormat.String)
+        self.add_column(self.tr("Path"),   'path',   ColumnFormat.String)
 
     def data(self, index, role: int = Qt.ItemDataRole.DisplayRole):
         if role == Qt.ItemDataRole.TextAlignmentRole:
@@ -33,9 +33,9 @@ class IconModel(IndexedTableModel):
                     design_type = icon['design']
                     match design_type:
                         case 0:
-                            return 'Standard'
+                            return self.tr("Standard")
                         case 1:
-                            return 'Flat'
+                            return self.tr("Flat")
         elif key == 'name' and role == Qt.ItemDataRole.DecorationRole:
             if 'path' in icon:
                 filename = f'{os.getcwd()}/icons/{icon['path']}'

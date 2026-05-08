@@ -1,6 +1,6 @@
 from PyQt6.QtCore import (pyqtSlot, Qt)
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QLineEdit, QHeaderView, QAbstractItemView, QPushButton,
-                             QHBoxLayout)
+from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QLineEdit, QHeaderView, QAbstractItemView,
+                             QPushButton, QHBoxLayout)
 
 from notetree.common.utils.errormessage import show_error_msg
 from notetree.common.utils.settings import settings
@@ -23,17 +23,17 @@ class IconSelectorDialog(QDialog):
         layout.setContentsMargins(10, 10, 10, 10)
         layout.setSpacing(5)
 
-        layout.addWidget(QLabel("Suchfilter"))
+        layout.addWidget(QLabel(self.tr("Filter")))
         self.line_edit = QLineEdit()
         self.line_edit.textChanged.connect(self._load_contents)
         layout.addWidget(self.line_edit)
 
         layout.addSpacing(15)
 
-        layout.addWidget(QLabel("Icons"))
+        layout.addWidget(QLabel(self.tr("Icons")))
 
         self.icons_model = IconModel()
-        self.tablewidget = TableButtonWidget('Icons', self.icons_model)
+        self.tablewidget = TableButtonWidget(self.tr("Icons"), self.icons_model)
         self.table = self.tablewidget.table
 
         self.table.setMinimumSize(350, 200)
@@ -55,11 +55,11 @@ class IconSelectorDialog(QDialog):
         button_layout.setContentsMargins(0, 0, 0, 0)
         button_layout.setSpacing(5)
         button_layout.addStretch(1)
-        ok_button = QPushButton("Ok")
+        ok_button = QPushButton(self.tr("Ok"))
         ok_button.clicked.connect(self.accept)
         ok_button.setMinimumWidth(120)
         button_layout.addWidget(ok_button)
-        cancel_button = QPushButton("Abbrechen")
+        cancel_button = QPushButton(self.tr("Cancel"))
         cancel_button.clicked.connect(self.reject)
         cancel_button.setMinimumWidth(120)
         button_layout.addWidget(cancel_button)
@@ -81,7 +81,7 @@ class IconSelectorDialog(QDialog):
                 self.selected_row = 0
                 self.icon_index = self.icons_model.item_at(0)['index']
             else:
-                show_error_msg('Es wurde kein Icon ausgewählt', self)
+                show_error_msg(self.tr("No icon has been selected."), self)
                 return
 
         settings.save_geometry(self)
