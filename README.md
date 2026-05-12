@@ -1,8 +1,8 @@
 # NoteTree
 
-NoteTree is a desktop writing and knowledge-organization application built with Python and PyQt6. It combines a tree-based project structure with a custom rich-text editor, allowing notes, references and longer text drafts to be organized in one workspace.
+NoteTree is a desktop writing and knowledge-organization application built with Python and PyQt6. It helps structure notes, references, and longer drafts in a tree-based workspace with a custom rich-text editor, outline navigation, and Markdown/HTML import and export.
 
-It was built organically from a personal need: collecting notes from books and online sources, structuring them into meaningful sections, and turning them into seminar material or longer essays. The current version focuses on the core foundation: project files with a document tree, rich-text editing, outline navigation, and Markdown/HTML import and export.
+It was built organically from a personal need: collecting notes from books and online sources, structuring them into meaningful sections, and turning them into seminar material or longer essays. The current version focuses on the core foundation: project files with a document tree, rich-text editing and outline navigation.
 
 ## Overview
 
@@ -46,7 +46,7 @@ The editor supports the following formatting features:
 
 A single document can also be exported as PDF using Qt’s printing/PDF infrastructure.
 
-Copy, cut, and paste are implemented using HTML and plain-text MIME data. Markdown is used as part of the project’s document serialization and for import/export workflows. The HTML and Markdown parsers are limited to the formatting features currently supported by the editor.
+Copy, cut, and paste use HTML and plain-text MIME data. Markdown is used for document serialization and import/export workflows. Both Markdown and HTML handling follow the editor’s supported formatting model.
 
 ### Outline navigation
 
@@ -59,9 +59,9 @@ The outline panel makes longer documents easier to navigate:
 
 ### Markdown and HTML support
 
-NoteTree includes custom Markdown and HTML import/export code tailored to the editor’s supported formatting subset.
+NoteTree includes custom Markdown and HTML import/export logic for the editor’s focused formatting subset.
 
-Currently supported Markdown-related features include:
+Supported Markdown-related features include:
 
 - headings
 - bold and italic inline formatting
@@ -118,9 +118,9 @@ Run the test suite from the repository root:
 python -m pytest
 ```
 
-## Technical Focus
+## Technical focus
 
-NoteTree is primarily interesting as a structured PyQt6 desktop application rather than as a generic note-taking tool.
+NoteTree is most interesting as a structured PyQt6 desktop application with custom editor, parser, and serialization logic - not as a replacement for established note-taking tools.
 The project demonstrates work in several areas:
 
 - PyQt6 desktop UI structure
@@ -136,24 +136,24 @@ The project demonstrates work in several areas:
 - icon library and icon manager UI
 - automated parser/exporter tests
 
-The codebase is intentionally organized around these concerns, with separate modules for the document tree, text editor, Markdown/HTML handling, outline panel, project/session logic, common widgets, and icon management.
+The codebase is organized around these concerns, with separate modules for the document tree, text editor, Markdown/HTML handling, outline panel, project/session logic, common widgets, and icon management.
 
 ### Custom Markdown/HTML parsing
 
-The Markdown and HTML support is intentionally limited to the subset represented by the editor, but that subset is implemented directly rather than delegated to a general-purpose Markdown library. This includes custom inline parsing, formatting resolution, and tests for importer/exporter behavior.
+Markdown and HTML handling is implemented directly instead of delegated to a general-purpose Markdown library. This keeps the import/export behavior aligned with the editor’s own document model. The implementation includes custom inline parsing, formatting resolution, and tests for importer/exporter behavior. 
 
 ## Current limitations
 
-NoteTree is functional, but its editor is intentionally limited in scope. It supports the formatting features listed above and does not cover the full range of Markdown or HTML.
+NoteTree is functional, with an editor focused on a defined set of formatting features. It does not cover the full range of Markdown or HTML.
 Current limitations include:
 
 - Unsupported Markdown constructs are treated as plain text.
-- Ordered lists, blockquotes, tables, and broader HTML/CSS support are not currently implemented.
+- Ordered lists, blockquotes, tables, and broader HTML/CSS support are not implemented.
 - Linked images are recognized by parts of the import logic but are not exported as editor content.
-- The repository does not currently provide a packaged installer.
+- The repository does not provide a packaged installer.
 - Automated tests currently focus on Markdown parsing/import/export rather than full UI behavior.
 
-These limitations are intentional at the current stage. The project prioritizes a coherent, testable editing model over broad but incomplete document-format coverage.
+The project prioritizes a coherent, testable editing model over broad but incomplete document-format coverage.
 
 ## Roadmap
 
