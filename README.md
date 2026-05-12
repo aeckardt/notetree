@@ -1,6 +1,6 @@
 # NoteTree
 
-NoteTree is a desktop writing and knowledge-organization application built with Python and PyQt6. It helps structure notes, references, and longer drafts in a tree-based workspace with a custom rich-text editor, outline navigation, and Markdown/HTML import and export.
+NoteTree is a desktop writing and knowledge-organization application built with a custom PyQt6 editor experience. It helps structure notes, references, and longer drafts in a tree-based workspace with a custom rich-text editor, outline navigation, and Markdown/HTML import and export.
 
 It started as a personal tool for collecting notes from books and online sources, structuring them into meaningful sections, and turning them into seminar material or longer essays. The current version focuses on the core foundation: project files with a document tree, rich-text editing and outline navigation.
 
@@ -140,7 +140,7 @@ The codebase is organized around these concerns, with separate modules for the d
 
 ### Custom Markdown/HTML parsing
 
-Markdown and HTML handling is implemented directly instead of delegated to a general-purpose Markdown library. This keeps the import/export behavior aligned with the editor’s own document model. The implementation includes custom inline parsing, formatting resolution, and tests for importer/exporter behavior. 
+Markdown and HTML handling is implemented directly instead of delegated to Qt's built-in conversion behavior. This gives the editor predictable control over the formatting features it supports and keeps import/export behavior aligned with NoteTree's own document model. The implementation includes custom inline parsing, formatting resolution, and tests for importer/exporter behavior.
 
 ## Current limitations
 
