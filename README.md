@@ -153,8 +153,6 @@ Current limitations include:
 - The repository does not provide a packaged installer.
 - Automated tests currently focus on Markdown parsing/import/export rather than full UI behavior.
 
-The project prioritizes a coherent, testable editing model over broad but incomplete document-format coverage.
-
 ## Roadmap
 
 Possible future improvements include:
