@@ -16,7 +16,7 @@ Example use cases:
 - structuring personal research or project material
 
 ## Screenshots
-[NoteTree workspace with document tree, rich-text editor and outline navigation](examples/notetree-demo/screenshot.png)
+[!NoteTree workspace with document tree, rich-text editor and outline navigation](examples/notetree-demo/screenshot.png)
 
 ## Features
 
@@ -187,76 +187,3 @@ Possible future improvements include:
 
 ## License / third-party assets
 This repository includes third-party icon assets. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution and license information related to bundled assets.
-
-...
-
-# SCHNIPSEL
-
-## Technical focus
-The project is not a wrapper around an existing note-taking framework. Several core parts are implemented directly, including the document tree model, rich-text editor behavior, Markdown serialization, HTML import/export and persistent project/session handling.
-
-## Demo workflow
-
-1. Create a new project.
-2. Add several documents to the tree.
-3. Write formatted text using headings, bold/italic text, lists and links.
-4. Use the outline panel to navigate between headings.
-5. Export a document to Markdown or HTML.
-6. Reopen the project and continue where you left off.
-
-## Running the application
-```bash
-python -m notetree.app
-```
-
-## Running tests
-```bash
-pytest
-```
-
-## Current limitations
-## Scope and limitations
-The Markdown and HTML support is intentionally limited to the subset currently used by the editor. Unsupported Markdown constructs are treated as plain text rather than interpreted as rich document elements.
-
-...
-
-# NoteTree
-
-NoteTree began as a personal attempt to build a better workspace for reading, collecting references, structuring thoughts and turning them into longer texts. The current version focuses on the core foundation: a tree-based document workspace with a custom rich-text editor and Markdown/HTML import/export.
-
-## General
-It is a desktop application where you can create projects with multiple rich-text documents in one tree. One project may be something like:
-* Seminar preparation for topic X
-* Todo list
-* Personal reflections
-
-## What's currently implemented
-* Desktop application based on PyQt6 
-  * containing a document tree view, a text editor and an outline of the current document
-* Menu for creating, opening and saving projects (consisting of a document tree)
-* Custom rich-text editor (based on QTextEdit)
-  * limited to
-    * normal text
-    * bold and italic
-    * headings (level 1-4)
-    * unordered lists
-    * font sizes (up to 72 points)
-    * horizontal rules
-    * links
-* Markdown and HTML import and export
-  * serialize documents as Markdown
-  * import documents from Markdown
-  * cut/copy to HTML
-  * paste from HTML
-  * the parsers are verified with multiple test cases
-* Global settings
-  * restore window geometry
-  * recent files
-  * last opened documents
-
-The Markdown and HTML parsers are by no means complete. They are minimalistic in that sense that they have all capabilities that I needed at the time. Markdown features that are currently not available but may be implemented in the future:
-* blockquotes
-* ordered lists
-* images
-* tables
-
