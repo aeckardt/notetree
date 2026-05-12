@@ -147,6 +147,15 @@ class DocumentTreeWidget(QWidget):
         if ned.exec() == QDialog.DialogCode.Accepted:
             self.model.insert_child_node(new_node, self.selected_index)
 
+            # Set the parent node as expanded
+            # This makes sure the child node is visible after inserting
+            self.treeview.setExpanded(self.selected_index, True)
+
+            # Select the new node after insertion
+            ModelSelectionFlag = QItemSelectionModel.SelectionFlag
+            command = ModelSelectionFlag.ClearAndSelect | ModelSelectionFlag.Rows
+            self.treeview.selectionModel().select(self.model.index_from_node(new_node), command)
+
     def edit_row(self):
         node: DocumentNode = self.selected_index.internalPointer()
 

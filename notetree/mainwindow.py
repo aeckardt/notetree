@@ -304,13 +304,15 @@ class MainWindow(QMainWindow):
 
         # Reopen recently opened document (if available)
         if recently_opened_id is not None:
-            def open_page(index: QModelIndex):
+            def maybe_select(index: QModelIndex):
+                # Select node if the document ID of the model index matches recently opened ID
                 node = index.internalPointer()
                 if node.id == recently_opened_id:
                     ModelSelectionFlag = QItemSelectionModel.SelectionFlag
                     command = ModelSelectionFlag.ClearAndSelect | ModelSelectionFlag.Rows
                     self.treeview.selectionModel().select(index, command)
-            self.model.iterate(open_page)
+            # Iterate all indexes to match the recently opened ID
+            self.model.iterate(maybe_select)
         else:
             self._open_document(QModelIndex())
 
