@@ -144,14 +144,12 @@ The Markdown and HTML support is intentionally limited to the subset represented
 
 ## Current limitations
 
-NoteTree is functional, but does not support every Markdown or HTML feature.
+NoteTree is functional, but its editor is intentionally limited in scope. It supports the formatting features listed above and does not cover the full range of Markdown or HTML.
 Current limitations include:
 
-- Markdown and HTML support is limited to the subset used by the editor.
 - Unsupported Markdown constructs are treated as plain text.
 - Ordered lists, blockquotes, tables, and broader HTML/CSS support are not currently implemented.
 - Linked images are recognized by parts of the import logic but are not exported as editor content.
-- The application language follows the system default; a manual override is possible through the settings file.
 - The repository does not currently provide a packaged installer.
 - Automated tests currently focus on Markdown parsing/import/export rather than full UI behavior.
 
