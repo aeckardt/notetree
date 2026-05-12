@@ -15,7 +15,7 @@ Example use cases:
 - drafting essays or longer texts
 - structuring personal research or project material
 
-## Screenshots
+## Screenshot
 ![NoteTree workspace with document tree, rich-text editor and outline navigation](examples/notetree-demo/screenshot.png)
 
 ## Features
@@ -37,7 +37,7 @@ A node consists of a document title and a selectable icon. A built-in icon selec
 
 The editor supports the following formatting features:
 
-- Headings levels 1-4
+- Heading levels 1-4
 - Bold and italic text
 - Font size changes
 - Unordered lists
@@ -138,9 +138,13 @@ The project demonstrates work in several areas:
 
 The codebase is intentionally organized around these concerns, with separate modules for the document tree, text editor, Markdown/HTML handling, outline panel, project/session logic, common widgets, and icon management.
 
+### Custom Markdown/HTML parsing
+
+The Markdown and HTML support is intentionally limited to the subset represented by the editor, but that subset is implemented directly rather than delegated to a general-purpose Markdown library. This includes custom inline parsing, formatting resolution, and tests for importer/exporter behavior.
+
 ## Current limitations
 
-NoteTree is functional, but it is not a complete word processor and does not aim to support every Markdown or HTML feature.
+NoteTree is functional, but does not support every Markdown or HTML feature.
 Current limitations include:
 
 - Markdown and HTML support is limited to the subset used by the editor.
@@ -158,9 +162,9 @@ These limitations are intentional at the current stage. The project prioritizes 
 Possible future improvements include:
 
 - implementing backlinks and a keyword index
-- improving the application design
-  - for example, reducing border for reduced visual disruption
-- extending editor support for ordered lists, blockquotes, tables and images
+- improving the visual design
+  - for example, reducing borders and visual noise
+- extending editor support for ordered lists, blockquotes, tables, and images
   - and extending the Markdown/HTML parsers accordingly
 - expanding automated tests beyond Markdown logic
 
