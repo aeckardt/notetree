@@ -4,6 +4,8 @@ NoteTree is a desktop writing and knowledge-organization application built aroun
 
 It started as a personal tool for collecting notes from books and online sources, structuring them into meaningful sections, and turning them into seminar material or longer essays. The current version focuses on the core foundation: project files with a document tree, rich-text editing and outline navigation.
 
+![NoteTree workspace with document tree, rich-text editor and outline navigation](examples/notetree-demo/screenshot.png)
+
 ## Overview
 
 A NoteTree project consists of multiple rich-text documents arranged hierarchically. This is useful for writing and research tasks where information needs to be split into smaller sections without losing the larger structure.
@@ -14,9 +16,6 @@ Example use cases:
 - collecting and organizing reading notes
 - drafting essays or longer texts
 - structuring personal research or project material
-
-## Screenshot
-![NoteTree workspace with document tree, rich-text editor and outline navigation](examples/notetree-demo/screenshot.png)
 
 ## Features
 
