@@ -16,7 +16,7 @@ Example use cases:
 - structuring personal research or project material
 
 ## Screenshots
-[!NoteTree workspace with document tree, rich-text editor and outline navigation](examples/notetree-demo/screenshot.png)
+![NoteTree workspace with document tree, rich-text editor and outline navigation](examples/notetree-demo/screenshot.png)
 
 ## Features
 
