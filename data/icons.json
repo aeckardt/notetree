@@ -172,5 +172,11 @@
         "index": 36,
         "name": "Weihnachtsmannmütze",
         "path": "fugue/santa-hat.png"
+    },
+    {
+        "design": 0,
+        "index": 37,
+        "name": "Globus",
+        "path": "../icons/fugue/globe-green.png"
     }
 ]

@@ -144,7 +144,7 @@ class TextEditor(QTextEdit):
         self.edit_link_action.setEnabled(False)
         self.edit_link_action.triggered.connect(self.edit_hyperlink)
 
-        self.insert_emoji_action = QAction(self.tr("Insert emoji"), self)
+        self.insert_emoji_action = QAction(self.tr("Insert emoji..."), self)
         self.insert_emoji_action.setShortcut(QKeySequence('Ctrl+E'))
         self.insert_emoji_action.triggered.connect(self.insert_emoji)
         self.addAction(self.insert_emoji_action)

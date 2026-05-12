@@ -143,14 +143,14 @@ class DocumentTreeWidget(QWidget):
     # Overrideable methods
     def add_row(self):
         new_node = DocumentNode()
-        ned = DocumentNodeEditorDialog(self.tr("Insert node..."), new_node)
+        ned = DocumentNodeEditorDialog(self.tr("Insert node"), new_node)
         if ned.exec() == QDialog.DialogCode.Accepted:
             self.model.insert_child_node(new_node, self.selected_index)
 
     def edit_row(self):
         node: DocumentNode = self.selected_index.internalPointer()
 
-        editor = DocumentNodeEditorDialog(self.tr("Edit node..."), node)
+        editor = DocumentNodeEditorDialog(self.tr("Edit node"), node)
         if editor.exec() == QDialog.DialogCode.Accepted:
             self.model.update_index(self.selected_index)
             self.model.tree_changed.emit()
@@ -311,7 +311,7 @@ class DocumentTreeWidget(QWidget):
             return QTreeView.mouseDoubleClickEvent(self.treeview, event)
 
         node: DocumentNode = index.internalPointer()
-        editor = DocumentNodeEditorDialog(self.tr("Edit node..."), node)
+        editor = DocumentNodeEditorDialog(self.tr("Edit node"), node)
         if editor.exec() == QDialog.DialogCode.Accepted:
             self.model.update_index(index)
             self.model.tree_changed.emit()

@@ -7,12 +7,18 @@ SETTINGS_PATH = "data/settings.json"
 
 class Settings:
     def __init__(self):
-        self.__data: dict[str, dict] = {}
+        self.__data = {}
 
-    def config(self, name: str, default = {}) -> dict:
-        if name not in self.__data:
-            self.__data[name] = default
-        return self.__data[name]
+    def config(self, key: str, default = {}) -> dict:
+        if key not in self.__data:
+            self.__data[key] = default
+        return self.__data[key]
+
+    def contains(self, key: str) -> bool:
+        return key in self.__data
+
+    def get(self, key: str):
+        return self.__data.get(key)
 
     def load(self):
         if os.path.isfile(SETTINGS_PATH):

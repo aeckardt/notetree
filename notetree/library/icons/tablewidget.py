@@ -12,7 +12,7 @@ class IconTableWidget(TableButtonWidget):
 
     def add_row(self):
         new_icon = {}
-        editor = IconEditorDialog(self.tr("Add icon..."), new_icon)
+        editor = IconEditorDialog(self.tr("Add icon"), new_icon)
         if editor.exec() == QDialog.DialogCode.Accepted:
             icons.append(new_icon)
 
@@ -22,6 +22,6 @@ class IconTableWidget(TableButtonWidget):
 
     def edit_row(self):
         icon = self.model.item_at(self.selected_row)
-        editor = IconEditorDialog(self.tr("Edit icon..."), icon)
+        editor = IconEditorDialog(self.tr("Edit icon"), icon)
         if editor.exec() == QDialog.DialogCode.Accepted:
             self.update_row(self.selected_row)

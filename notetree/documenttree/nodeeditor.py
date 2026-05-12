@@ -51,11 +51,11 @@ class DocumentNodeEditorDialog(QDialog):
 
         icon_layout.addWidget(self.icon_widget)
 
-        self.select_button = GradientButton(text=f" {self.tr("Select")} ")
+        self.select_button = GradientButton(text=f" {self.tr('Select')} ")
         self.select_button.clicked.connect(self._on_select_clicked)
         icon_layout.addWidget(self.select_button)
 
-        self.remove_button = GradientButton(text=f" {self.tr("Remove")} ")
+        self.remove_button = GradientButton(text=f" {self.tr('Remove')} ")
         self.remove_button.clicked.connect(self._on_remove_clicked)
         icon_layout.addWidget(self.remove_button)
 

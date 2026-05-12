@@ -1,0 +1,110 @@
+{
+    "file version": "1.1",
+    "documents": [
+        {
+            "description": "Writing Project",
+            "id": 1,
+            "icon": 15,
+            "children": [
+                11,
+                2,
+                6,
+                10
+            ]
+        },
+        {
+            "description": "Research Notes",
+            "id": 2,
+            "icon": 32,
+            "children": [
+                3,
+                4,
+                5
+            ]
+        },
+        {
+            "description": "Book excerpts",
+            "id": 3,
+            "icon": 28
+        },
+        {
+            "description": "Online references",
+            "id": 4,
+            "icon": 37
+        },
+        {
+            "description": "Open questions",
+            "id": 5,
+            "icon": 5
+        },
+        {
+            "description": "Draft",
+            "id": 6,
+            "icon": 18,
+            "children": [
+                7,
+                8,
+                9
+            ]
+        },
+        {
+            "description": "Introduction",
+            "id": 7,
+            "icon": 3
+        },
+        {
+            "description": "Main argument",
+            "id": 8,
+            "icon": 3
+        },
+        {
+            "description": "Conclusion",
+            "id": 9,
+            "icon": 3
+        },
+        {
+            "description": "Export notes",
+            "id": 10,
+            "icon": 13
+        },
+        {
+            "description": "NoteTree Demo",
+            "id": 11,
+            "icon": 3,
+            "notes": [
+                "# NoteTree Demo",
+                "Structuring notes into longer texts",
+                "",
+                "NoteTree is designed for projects where isolated notes gradually become structured writing. A project can contain multiple documents arranged in a tree, while the outline panel provides quick navigation inside the current document.",
+                "",
+                "## Research notes",
+                "Early project material often starts as short fragments: copied references, reading notes, questions, and partial ideas. NoteTree keeps these fragments close to the developing draft instead of separating them into unrelated files.",
+                "",
+                "Useful material may include:",
+                "* reading notes",
+                "* links to online references",
+                "* open questions",
+                "* draft fragments",
+                "",
+                "## Drafting workflow",
+                "A tree-based structure makes it possible to split a larger writing task into smaller sections. Individual documents can represent chapters, arguments, tasks, or research areas.",
+                "",
+                "### From notes to sections",
+                "The editor supports basic rich-text formatting such as headings, **bold** and *italic* text, unordered lists, links, and horizontal rules. The goal is not to replace a full word processor, but to provide enough structure for focused writing and organization.",
+                "",
+                "## Sources",
+                "* <ins>[https://example.com/reference-one]()</ins>",
+                "* <ins>[https://example.com/reference-two]()</ins>",
+                "",
+                "---",
+                "",
+                "## Export",
+                "Documents can be serialized as Markdown and exchanged through HTML-based clipboard operations. This makes the project useful both as a standalone workspace and as part of a larger writing workflow."
+            ]
+        }
+    ],
+    "roots": [
+        1
+    ],
+    "next id": 12
+}

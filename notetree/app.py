@@ -70,7 +70,8 @@ def main(argv):
     # Available languages are currently
     # - English (en_US)
     # - German (de_DE)
-    install_translator(app)
+    lang = settings.get("language")
+    install_translator(app, lang)
 
     # Suppress specific Qt warnings
     os.environ["QT_LOGGING_RULES"] = "*.debug=false"

@@ -63,14 +63,14 @@
     </message>
     <message>
         <location filename="../notetree/documenttree/treewidget.py" line="146"/>
-        <source>Insert node...</source>
-        <translation>Neuen Knoten hinzufügen...</translation>
+        <source>Insert node</source>
+        <translation>Neuer Knoten</translation>
     </message>
     <message>
         <location filename="../notetree/documenttree/treewidget.py" line="314"/>
         <location filename="../notetree/documenttree/treewidget.py" line="153"/>
-        <source>Edit node...</source>
-        <translation>Knoten bearbeiten...</translation>
+        <source>Edit node</source>
+        <translation>Knoten bearbeiten</translation>
     </message>
     <message>
         <location filename="../notetree/documenttree/treewidget.py" line="208"/>
@@ -220,13 +220,13 @@
     <name>IconTableWidget</name>
     <message>
         <location filename="../notetree/library/icons/tablewidget.py" line="15"/>
-        <source>Add icon...</source>
-        <translation>Icon hinzufügen...</translation>
+        <source>Add icon</source>
+        <translation>Icon hinzufügen</translation>
     </message>
     <message>
         <location filename="../notetree/library/icons/tablewidget.py" line="25"/>
-        <source>Edit icon...</source>
-        <translation>Icon bearbeiten...</translation>
+        <source>Edit icon</source>
+        <translation>Icon bearbeiten</translation>
     </message>
 </context>
 <context>
@@ -482,15 +482,19 @@ Wollen Sie die Änderungen speichern?</translation>
         <translation>Link bearbeiten</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="370"/>
         <location filename="../notetree/texteditor/editor.py" line="147"/>
-        <source>Insert emoji</source>
-        <translation>Emoji einfügen</translation>
+        <source>Insert emoji...</source>
+        <translation>Emoji einfügen...</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="326"/>
         <source>Insert link</source>
         <translation>Link einfügen</translation>
+    </message>
+    <message>
+        <location filename="../notetree/texteditor/editor.py" line="370"/>
+        <source>Insert emoji</source>
+        <translation>Emoji einfügen</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="749"/>
@@ -508,22 +512,22 @@ Wollen Sie die Änderungen speichern?</translation>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1220"/>
         <source>Heading Level 1</source>
-        <translation>Überschrift: Ebene 1</translation>
+        <translation>Heading Level 1</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1222"/>
         <source>Heading Level 2</source>
-        <translation>Überschrift: Ebene 2</translation>
+        <translation>Heading Level 2</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1224"/>
         <source>Heading Level 3</source>
-        <translation>Überschrift: Ebene 3</translation>
+        <translation>Heading Level 3</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1226"/>
         <source>Heading Level 4</source>
-        <translation>Überschrift: Ebene 4</translation>
+        <translation>Heading Level 4</translation>
     </message>
     <message>
         <location filename="../notetree/texteditor/editor.py" line="1228"/>
