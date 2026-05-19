@@ -2,4 +2,5 @@ import sys
 
 from notetree.app import main
 
-sys.exit(main(sys.argv))
+if __name__ == '__main__':
+    sys.exit(main())

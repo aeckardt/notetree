@@ -44,7 +44,7 @@ def install_translator(app, language: str | None = None) -> bool:
 
     return False
 
-def main(argv) -> int:
+def main() -> int:
     org_name = "aeckardt"
     app_name = "notetree"
 
@@ -67,7 +67,7 @@ def main(argv) -> int:
         icons.load()
         settings.load()
 
-        app = QApplication(argv)
+        app = QApplication(sys.argv)
 
         app.setApplicationName(app_name)
         app.setOrganizationName(org_name)
@@ -92,4 +92,4 @@ def main(argv) -> int:
     return result
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv))
+    sys.exit(main())
