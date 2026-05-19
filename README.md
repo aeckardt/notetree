@@ -89,13 +89,13 @@ python -m venv .venv
 source .venv/bin/activate
 
 python -m pip install --upgrade pip
-python -m pip install PyQt6
+python -m pip install -e .
 ```
 
 Then run the application:
 
 ```bash
-python -m notetree.app
+python -m notetree
 ```
 
 On Windows, activate the virtual environment with:

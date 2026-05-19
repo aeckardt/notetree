@@ -12,7 +12,7 @@ dependencies = [
     "PyQt6",
 ]
 
-[project.scripts]
+[project.gui-scripts]
 notetree = "notetree.app:main"
 
 [tool.setuptools.packages.find]
