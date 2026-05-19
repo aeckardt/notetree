@@ -13,6 +13,8 @@ from notetree.library.base.indexcounter import indexcounter
 from notetree.library.icons.datacontainer import icons
 from notetree.mainwindow import MainWindow as MainWindow
 
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.resolve()
+
 def install_translator(app, language: str | None = None) -> bool:
     """
     Installs an application translator.
@@ -42,7 +44,7 @@ def install_translator(app, language: str | None = None) -> bool:
 
     return False
 
-def main(argv):
+def main(argv) -> int:
     org_name = "aeckardt"
     app_name = "notetree"
 
@@ -57,37 +59,37 @@ def main(argv):
         except ImportError:
             pass
 
-    indexcounter.load()
-    icons.load()
-    settings.load()
-
-    app = QApplication(argv)
-
-    app.setApplicationName(app_name)
-    app.setOrganizationName(org_name)
-
-    # Translate strings according to system standard
-    # Available languages are currently
-    # - English (en_US)
-    # - German (de_DE)
-    lang = settings.get("language")
-    install_translator(app, lang)
-
     # Suppress specific Qt warnings
     os.environ["QT_LOGGING_RULES"] = "*.debug=false"
 
-    window = MainWindow()
-    window.setup_ui()
-    window.show()
+    with working_directory(PROJECT_ROOT):
+        indexcounter.load()
+        icons.load()
+        settings.load()
 
-    result = app.exec()
+        app = QApplication(argv)
 
-    indexcounter.save()
-    icons.save()
-    settings.save()
+        app.setApplicationName(app_name)
+        app.setOrganizationName(org_name)
+
+        # Translate strings according to system standard
+        # Available languages are currently
+        # - English (en_US)
+        # - German (de_DE)
+        lang = settings.get("language")
+        install_translator(app, lang)
+
+        window = MainWindow()
+        window.setup_ui()
+        window.show()
+
+        result = app.exec()
+
+        indexcounter.save()
+        icons.save()
+        settings.save()
 
     return result
 
 if __name__ == '__main__':
-    with working_directory(pathlib.Path(__file__).parent.parent.resolve()):
-        sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv))

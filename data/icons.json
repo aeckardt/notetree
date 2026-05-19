@@ -177,6 +177,42 @@
         "design": 0,
         "index": 37,
         "name": "Globus",
-        "path": "../icons/fugue/globe-green.png"
+        "path": "fugue/globe-green.png"
+    },
+    {
+        "design": 0,
+        "index": 38,
+        "name": "Blatt",
+        "path": "fugue/leaf.png"
+    },
+    {
+        "design": 0,
+        "index": 39,
+        "name": "Baum",
+        "path": "fugue/tree.png"
+    },
+    {
+        "design": 0,
+        "index": 40,
+        "name": "Pflanze",
+        "path": "fugue/leaf-plant.png"
+    },
+    {
+        "design": 0,
+        "index": 41,
+        "name": "Eichel",
+        "path": "fugue/acorn.png"
+    },
+    {
+        "design": 0,
+        "index": 42,
+        "name": "Tropfen",
+        "path": "fugue/water.png"
+    },
+    {
+        "design": 0,
+        "index": 43,
+        "name": "bewölktes Wetter",
+        "path": "fugue/weather-cloudy.png"
     }
 ]

@@ -11,22 +11,24 @@ from notetree.library.base.indexcounter import indexcounter
 from notetree.library.icons.datacontainer import icons
 from notetree.library.icons.managerdialog import IconManagerDialog
 
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.resolve()
+
 def main(argv):
-    indexcounter.load()
-    icons.load()
-    settings.load()
+    with working_directory(PROJECT_ROOT):
+        indexcounter.load()
+        icons.load()
+        settings.load()
 
-    app = QApplication(sys.argv)
-    imd = IconManagerDialog()
-    imd.show()
-    result = app.exec()
+        app = QApplication(sys.argv)
+        imd = IconManagerDialog()
+        imd.show()
+        result = app.exec()
 
-    indexcounter.save()
-    icons.save()
-    settings.save()
+        indexcounter.save()
+        icons.save()
+        settings.save()
 
-    sys.exit(result)
+    return result
 
 if __name__ == '__main__':
-    with working_directory(pathlib.Path(__file__).parent.parent.parent.resolve()):
-        sys.exit(main(sys.argv))
+    sys.exit(main(sys.argv))

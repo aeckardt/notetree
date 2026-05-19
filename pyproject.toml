@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notetree"
+version = "0.1.0"
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "PyQt6",
+]
+
+[project.scripts]
+notetree = "notetree.app:main"
+
+[tool.setuptools.packages.find]
+include = ["notetree*"]
+
+[tool.setuptools.package-data]
+notetree = [
+    "icons/**/*.png",
+    "data/*.json",
+    "translations/*.qm",
+    "translations/*.ts",
+]
