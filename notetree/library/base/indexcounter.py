@@ -23,7 +23,7 @@ class IndexCounter:
             self._data[key] = {'next index': max_index + 1}
         return self._data[key]['next index']
 
-    def inc(self, type : Type):
+    def inc(self, type: Type):
         key = self._key(type)
         next_index = self.next(type)
         self._data[key]['next index'] = next_index + 1
@@ -37,8 +37,8 @@ class IndexCounter:
 
     def save(self):
         with open('data/index.json', 'w') as f:
-            f.write(json.dumps(self._data, indent = 4, sort_keys = True,
-                               separators=(',', ': '), ensure_ascii = False))
+            json.dump(self._data, f, indent = 4, sort_keys = True,
+                      separators=(',', ': '), ensure_ascii = False)
 
     def _key(self, type: Type):
         return {

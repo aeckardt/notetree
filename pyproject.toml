@@ -6,6 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "notetree"
 version = "1.0"
 readme = "README.md"
+license = "GPL-3.0-only"
+license-files = [
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md",
+    "icons/fontawesome/LICENSE.txt"
+]
 requires-python = ">=3.10"
 
 dependencies = [

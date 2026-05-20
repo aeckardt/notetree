@@ -5,3 +5,4 @@ docs/private
 settings.json
 launch_app.sh
 *.app
+*.egg-info

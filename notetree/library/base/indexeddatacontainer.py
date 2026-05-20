@@ -86,8 +86,8 @@ class IndexedDataContainer(QObject):
 
     def save(self):
         with open(self._filename, 'w', encoding='utf-8') as f:
-            f.write(json.dumps(self._data, indent=4, sort_keys=True,
-                               separators=(',', ': '), ensure_ascii=False))
+            json.dump(self._data, f, indent=4, sort_keys=True,
+                      separators=(',', ': '), ensure_ascii=False)
 
     def update(self, dataset):
         index = dataset['index']

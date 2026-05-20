@@ -81,7 +81,7 @@ These tests focus on the parsing and serialization behavior that is central to t
 
 ## Running the application
 
-This repository currently contains the application source code, but it is not yet packaged as an installable desktop application.
+This repository contains the application source code. It does not provide a packaged desktop installer.
 From the repository root, create a virtual environment and install the required runtime dependency:
 
 ```bash
@@ -149,7 +149,6 @@ Current limitations include:
 - Unsupported Markdown constructs are treated as plain text.
 - Ordered lists, blockquotes, tables, and broader HTML/CSS support are not implemented.
 - Linked images are recognized by parts of the import logic but are not exported as editor content.
-- The repository does not provide a packaged installer.
 - Automated tests currently focus on Markdown parsing/import/export rather than full UI behavior.
 
 ## Roadmap
@@ -166,4 +165,7 @@ Possible future improvements include:
 Backlinks and a keyword index are especially relevant to the original purpose of the project: collecting notes from books and online sources, then organizing them into meaningful structures. A keyword could work like a tag: a lightweight marker that links related topics across different projects.
 
 ## License / third-party assets
-This repository includes third-party icon assets. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for attribution and license information related to bundled assets.
+NoteTree is licensed under the GNU General Public License v3.0 only.
+See [LICENSE](LICENSE) for details.
+
+Third-party assets may be covered by their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

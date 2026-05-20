@@ -77,7 +77,7 @@ class ProjectFile:
                 raise ProjectFileFormatError(f"'roots[{i}]' (= {root_id}) is out of range.")
 
         # The data has been validated
-        # Replace member variables with local ones
+        # Assign local data to member variables
 
         self.file_version = file_version
         self.name = name

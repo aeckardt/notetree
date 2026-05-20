@@ -26,7 +26,7 @@ class ProjectModificationTracker(QObject):
         QObject.__init__(self)
 
         # Flag is set, if the document tree had
-        # insert, edit, remove, move operations
+        # insert, edit, remove and/or move operations
         self.tree_modified = False
 
         # Any document that has unsaved changes,
@@ -59,13 +59,12 @@ class ProjectModificationTracker(QObject):
 
     @pyqtSlot(int, bool)
     def set_document_modified(self, document_id: int, modified: bool):
-        modified_before = self.is_modified()
+        before = self.is_modified()
         if modified:
             self.modified_documents.add(document_id)
         elif document_id in self.modified_documents:
             self.modified_documents.remove(document_id)
-        if self.is_modified() != modified_before:
-            self.changed.emit(self.is_modified())
+        self._emit_if_changed(before)
 
 
 class ProjectSession:
