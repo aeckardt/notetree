@@ -1,8 +1,17 @@
 # Third-Party Notices
 
-This project includes third-party icon assets.
+## PyQt6
+
+This project depends on PyQt6.
+
+- Source: https://www.riverbankcomputing.com/software/pyqt/
+- Package: PyQt6
+- License used by this project: GNU General Public License v3.0 only
+- License URL: https://www.gnu.org/licenses/gpl-3.0.html
 
 ## Font Awesome Free
+
+This project includes third-party icon assets.
 
 Some icons are derived from Font Awesome Free 6.6.0 Desktop.
 

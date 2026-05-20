@@ -168,4 +168,4 @@ Backlinks and a keyword index are especially relevant to the original purpose of
 NoteTree is licensed under the GNU General Public License v3.0 only.
 See [LICENSE](LICENSE) for details.
 
-Third-party assets may be covered by their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Third-party components and assets may be covered by their own licenses. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
