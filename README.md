@@ -1,5 +1,7 @@
 # NoteTree
 
+[![Tests](https://github.com/aeckardt/notetree/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/aeckardt/notetree/actions/workflows/tests.yml)
+
 NoteTree is a desktop writing and knowledge-organization application built around a custom PyQt6 editor experience. It helps structure notes, references, and longer drafts in a tree-based workspace with a custom rich-text editor, outline navigation, and Markdown/HTML import and export.
 
 It started as a personal tool for collecting notes from books and online sources, structuring them into meaningful sections, and turning them into seminar material or longer essays. The current version focuses on the core foundation: project files with a document tree, rich-text editing and outline navigation.
