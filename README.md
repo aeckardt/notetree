@@ -81,7 +81,7 @@ These tests focus on the parsing and serialization behavior that is central to t
 
 ## Running the application
 
-This repository contains the application source code. It does not provide a packaged desktop installer.
+This repository contains the application source code. It is currently intended to be run from the source tree and does not provide a packaged desktop installer.
 From the repository root, create a virtual environment and install the required runtime dependency:
 
 ```bash

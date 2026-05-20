@@ -23,11 +23,3 @@ notetree = "notetree.app:main"
 
 [tool.setuptools.packages.find]
 include = ["notetree*"]
-
-[tool.setuptools.package-data]
-notetree = [
-    "icons/**/*.png",
-    "data/*.json",
-    "translations/*.qm",
-    "translations/*.ts",
-]
