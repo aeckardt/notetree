@@ -7,6 +7,7 @@ import subprocess
 import platform
 import pathlib
 from dataclasses import dataclass
+from typing import TypeAlias
 from collections.abc import Callable
 
 from PyQt6.QtCore import (QSize, Qt, pyqtSlot, pyqtSignal, QMimeData)
@@ -34,7 +35,7 @@ class Hyperlink:
     text: str
     href: str
 
-FormatModifier = Callable[[QTextBlock, QTextCharFormat], QTextCharFormat]
+FormatModifier: TypeAlias = Callable[[QTextBlock, QTextCharFormat], QTextCharFormat]
 
 class TextEditor(QTextEdit):
     # -----------------------------------------------
@@ -578,7 +579,7 @@ class TextEditor(QTextEdit):
 
         if block_fmt.headingLevel() > 0:
             block_fmt.setHeadingLevel(0)
-            self._apply_heading_char_format(block, 0)
+            self._clear_heading_char_format(block)
 
         # Reset paragraph-level formatting that should not survive
         block_fmt.setIndent(0)
@@ -598,7 +599,7 @@ class TextEditor(QTextEdit):
             block_fmt.setHeadingLevel(0)
 
             # Remove char format used for headings
-            self._apply_heading_char_format(block, 0)
+            self._clear_heading_char_format(block)
 
         list = cursor.currentList()
         if not list:

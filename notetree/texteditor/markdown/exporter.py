@@ -135,10 +135,6 @@ class MarkdownExporter:
         opening_tokens = []
         closing_tokens = []
         for fmt_change in ef.fmt_changes:
-            # Don't export font size changes if block format is a heading
-            if heading_level > 0 and fmt_change.type == Type.pointsize:
-                continue
-
             match fmt_change.type:
                 case Type.bold:
                     if fmt_change.open:
@@ -156,6 +152,9 @@ class MarkdownExporter:
                     else:
                         closing_tokens.append('</ins>')
                 case Type.pointsize:
+                    # Don't export font size changes if block format is a heading
+                    if heading_level > 0:
+                        continue
                     if fmt_change.open:
                         opening_tokens.append(f'<span style="font-size:{fmt_change.attrs['font-size']}pt">')
                     else:
