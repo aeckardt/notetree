@@ -22,7 +22,7 @@ class IndexedTableModel(QAbstractTableModel):
     def add_column(self, caption, key, format, sort_by_table_contents: bool = True):
         self._columns.append(Column(caption, key, format, sort_by_table_contents))
 
-    def columnCount(self, parent = ...):
+    def columnCount(self, parent=...):
         if self._selected_columns is None:
             return len(self._columns)
         else:

@@ -239,20 +239,10 @@ class TextEditor(QTextEdit):
 
     @pyqtSlot()
     def toggle_bold(self):
-        cursor = self.textCursor()
-        base_weight = default_font_weight(cursor.block())
-
-        # Watch out here:
-        # The checked state has already been changed after triggering the action
-        new_font_weight = (
-            STRONG_FONT_WEIGHT
-            if self.text_bold_action.isChecked()
-            else base_weight
-        )
-
-        fmt = QTextCharFormat()
-        fmt.setFontWeight(new_font_weight)
-        self._merge_format_on_selection(fmt)
+        if self.text_bold_action.isChecked():
+            self._set_markdown_strong_on_selection()
+        else:
+            self._clear_markdown_strong_on_selection()
 
     @pyqtSlot()
     def toggle_italic(self):
@@ -323,45 +313,89 @@ class TextEditor(QTextEdit):
         # End edit block
         cursor.endEditBlock()
 
+    def _set_markdown_strong_on_selection(self):
+        fmt = QTextCharFormat()
+        fmt.setFontWeight(STRONG_FONT_WEIGHT)
+        self._merge_format_on_selection(fmt)
+
+    def _clear_markdown_strong_on_selection(self):
+        cursor = self.textCursor()
+
+        if not cursor.hasSelection():
+            fmt = QTextCharFormat()
+            fmt.setFontWeight(default_font_weight(cursor.block()))
+            self._merge_format_on_selection(fmt)
+            return
+
+        def _clear_markdown_strong(block: QTextBlock, char_fmt: QTextCharFormat) -> QTextCharFormat:
+            base_weight = default_font_weight(block)
+            if is_markdown_strong(char_fmt):
+                char_fmt.setFontWeight(base_weight)
+            return char_fmt
+
+        self._apply_fragment_changes(cursor, _clear_markdown_strong)
+
+        # # Keep the current typing format coherent after the operation.
+        # fmt = QTextCharFormat()
+        # fmt.setFontWeight(default_font_weight(cursor.block()))
+        # self.mergeCurrentCharFormat(fmt)
+
     def _apply_heading_char_format(self, block: QTextBlock, heading_level: int):
-        updates = []
+        def _apply_heading_format(block: QTextBlock, char_fmt: QTextCharFormat) -> QTextCharFormat:
+            is_strong = is_markdown_strong(char_fmt)
 
-        it = block.begin()
-        while not it.atEnd():
-            fragment = it.fragment()
+            # Set / remove heading-specific visual formatting.
+            if heading_level > 0:
+                char_fmt.setFontWeight(STRONG_FONT_WEIGHT if is_strong else HEADING_FONT_WEIGHT)
+                char_fmt.setProperty(QTextCharFormat.Property.FontSizeAdjustment, 4 - heading_level)
+            else:
+                char_fmt.setFontWeight(STRONG_FONT_WEIGHT if is_strong else NORMAL_FONT_WEIGHT)
+                char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
 
-            if fragment.isValid():
-                char_fmt = QTextCharFormat(fragment.charFormat())
-                is_strong = is_markdown_strong(char_fmt)
+            return char_fmt
 
-                # Set / remove heading-specific visual formatting.
-                if heading_level > 0:
-                    char_fmt.setFontWeight(STRONG_FONT_WEIGHT if is_strong else HEADING_FONT_WEIGHT)
-                    char_fmt.setProperty(QTextCharFormat.Property.FontSizeAdjustment, 4 - heading_level)
-                else:
-                    char_fmt.setFontWeight(STRONG_FONT_WEIGHT if is_strong else NORMAL_FONT_WEIGHT)
-                    char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
-
-                updates.append((
-                    fragment.position(),
-                    fragment.length(),
-                    char_fmt
-                ))
-
-            it += 1
-
-        local_cursor = QTextCursor(self.document())
-
-        for position, length, char_fmt in updates:
-            local_cursor.setPosition(position)
-            local_cursor.setPosition(
-                position + length,
-                QTextCursor.MoveMode.KeepAnchor,
-            )
-            local_cursor.setCharFormat(char_fmt)
+        self._apply_fragment_changes(block, _apply_heading_format)
 
     def _clear_heading_char_format(self, block: QTextBlock):
         self._apply_heading_char_format(block, 0)
+
+    def _apply_fragment_changes(self, cursor: QTextCursor, modified_format):
+        selection_start = cursor.selectionStart()
+        selection_end = cursor.selectionEnd()
+
+        updates = []
+
+        for block in self._selected_blocks(cursor):
+            it = block.begin()
+            while not it.atEnd():
+                fragment = it.fragment()
+
+                if fragment.isValid():
+                    fragment_start = fragment.position()
+                    fragment_end = fragment.position() + fragment.length()
+
+                    start = max(selection_start, fragment_start)
+                    end = min(selection_end, fragment_end)
+
+                    if start < end:
+                        char_fmt = QTextCharFormat(fragment.charFormat())
+                        updates.append((
+                            start,
+                            end,
+                            modified_format(block, char_fmt)
+                        ))
+
+                it += 1
+
+        cursor.beginEditBlock()
+
+        local_cursor = QTextCursor(self.document())
+        for start, end, char_fmt in updates:
+            local_cursor.setPosition(start)
+            local_cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
+            local_cursor.setCharFormat(char_fmt)
+
+        cursor.endEditBlock()
 
     # -----------------------------------------------
     # 5. Private methods - Text insertion
