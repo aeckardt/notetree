@@ -6,6 +6,14 @@ from notetree.texteditor.markdown.exporter import MarkdownExporter
 def test_markdown_export():
     test_cases = [
         {
+            "input": "<h1>A <strong>bold</strong> heading</h1>",
+            "expected_markdown": "# A **bold** heading",
+        },
+        {
+            "input": "<h1><strong>A completely bold heading</strong></h1>",
+            "expected_markdown": "# **A completely bold heading**",
+        },
+        {
             "input": "<h1>A <em>nice</em> heading</h1>",
             "expected_markdown": "# A *nice* heading",
         },

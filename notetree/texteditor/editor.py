@@ -195,12 +195,12 @@ class TextEditor(QTextEdit):
     # -----------------------------------------------
 
     @pyqtSlot(QTextCharFormat)
-    def _on_current_charformat_changed(self, format):
-        self.font_changed.emit(format.font())
+    def _on_current_charformat_changed(self, char_fmt):
+        self.font_changed.emit(char_fmt.font())
 
-        self.text_bold_action.setChecked(format.font().bold())
-        self.text_italic_action.setChecked(format.font().italic())
-        self.text_underline_action.setChecked(format.font().underline())
+        self.text_bold_action.setChecked(is_markdown_strong(char_fmt))
+        self.text_italic_action.setChecked(char_fmt.font().italic())
+        self.text_underline_action.setChecked(char_fmt.font().underline())
 
     @pyqtSlot()
     def _on_cursor_position_changed(self):
@@ -239,8 +239,16 @@ class TextEditor(QTextEdit):
 
     @pyqtSlot()
     def toggle_bold(self):
+        # Watch out here:
+        # The checked state has already been changed when triggering the action
+        heading_lvl = self.textCursor().blockFormat().headingLevel()
+        if heading_lvl > 0:
+            new_font_weight = STRONG_FONT_WEIGHT if self.text_bold_action.isChecked() else HEADING_FONT_WEIGHT
+        else:
+            new_font_weight = STRONG_FONT_WEIGHT if not self.text_bold_action.isChecked() else NORMAL_FONT_WEIGHT
+
         fmt = QTextCharFormat()
-        fmt.setFontWeight(QFont.Weight.Bold if self.text_bold_action.isChecked() else QFont.Weight.Normal)
+        fmt.setFontWeight(new_font_weight)
         self._merge_format_on_selection(fmt)
 
     @pyqtSlot()
@@ -321,13 +329,14 @@ class TextEditor(QTextEdit):
 
             if fragment.isValid():
                 char_fmt = QTextCharFormat(fragment.charFormat())
+                is_strong = is_markdown_strong(char_fmt)
 
                 # Set / remove heading-specific visual formatting.
                 if heading_level > 0:
-                    char_fmt.setFontWeight(QFont.Weight.Bold)
+                    char_fmt.setFontWeight(STRONG_FONT_WEIGHT if is_strong else HEADING_FONT_WEIGHT)
                     char_fmt.setProperty(QTextCharFormat.Property.FontSizeAdjustment, 4 - heading_level)
                 else:
-                    char_fmt.setFontWeight(QFont.Weight.Normal)
+                    char_fmt.setFontWeight(STRONG_FONT_WEIGHT if is_strong else NORMAL_FONT_WEIGHT)
                     char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
 
                 updates.append((
@@ -347,6 +356,9 @@ class TextEditor(QTextEdit):
                 QTextCursor.MoveMode.KeepAnchor,
             )
             local_cursor.setCharFormat(char_fmt)
+
+    def _clear_heading_char_format(self, block: QTextBlock):
+        self._apply_heading_char_format(block, 0)
 
     # -----------------------------------------------
     # 5. Private methods - Text insertion

@@ -77,38 +77,6 @@ class MarkdownExporter:
 
         # Build prefix from block format
         if text_list:
-            indent = "  " * block_format.indent()
-            prefix = f'{indent}* '
-            return prefix + self._export_inline_content(
-                block,
-                remove_two_spaces=True,
-            )
-
-        if 1 <= heading_level <= 4:
-            prefix = f'{"#" * heading_level} '
-            return prefix + self._export_inline_content(
-                block,
-                remove_two_spaces=False,
-                heading_level=heading_level,
-            )
-
-        return self._export_inline_content(
-            block,
-            remove_two_spaces=False,
-        )
-
-    def _export_block(self, block: QTextBlock) -> str:
-        block_format = block.blockFormat()
-        heading_level = block_format.headingLevel()
-        text_list = block.textList()
-
-        # Check for horizontal rule
-        horizontal_rule = block_format.hasProperty(QTextFormat.Property.BlockTrailingHorizontalRulerWidth)
-        if horizontal_rule:
-            return '---'
-
-        # Build prefix from block format
-        if text_list:
             # Two spaces per list indent level
             indent = "  " * block_format.indent()
             prefix = f"{indent}* "
@@ -168,7 +136,7 @@ class MarkdownExporter:
         closing_tokens = []
         for fmt_change in ef.fmt_changes:
             # Don't export font size changes if block format is a heading
-            if heading_level > 0 and fmt_change.type in [Type.bold, Type.pointsize]:
+            if heading_level > 0 and fmt_change.type == Type.pointsize:
                 continue
 
             match fmt_change.type:

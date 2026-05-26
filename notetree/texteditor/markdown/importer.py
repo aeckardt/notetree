@@ -121,7 +121,7 @@ class MarkdownImporter:
             elif token.type == Type.HEADING:
                 # Adjust heading level and charformat
                 self.block_fmt.setHeadingLevel(token.level)
-                self.char_fmt.setFontWeight(QFont.Weight.Bold)
+                self.char_fmt.setFontWeight(HEADING_FONT_WEIGHT)
                 self.char_fmt.setProperty(QTextCharFormat.Property.FontSizeAdjustment, 4 - token.level)
 
             elif token.type == Type.HORIZONTAL_RULE:
@@ -139,7 +139,7 @@ class MarkdownImporter:
 
             if token.type == Type.HEADING:
                 # Revert char format before new block for better rendering of list bullets
-                self.char_fmt.setFontWeight(QFont.Weight.Normal)
+                self.char_fmt.setFontWeight(NORMAL_FONT_WEIGHT)
                 self.char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
 
             # Set blockformat for the current block before adding a new
@@ -150,7 +150,7 @@ class MarkdownImporter:
 
         def apply_node_style(node: InlineNode, char_format: QTextCharFormat):
             if node.type == Type.STRONG:
-                char_format.setFontWeight(QFont.Weight.Bold)
+                char_format.setFontWeight(STRONG_FONT_WEIGHT)
             elif node.type == Type.EMPH:
                 char_format.setFontItalic(True)
             elif node.type == Type.INLINE_LINK:

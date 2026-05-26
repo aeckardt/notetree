@@ -186,7 +186,7 @@ class InlineFormatResolver:
 
             # Detect all format changes
             # Handle opening tags
-            if not prev_fmt.font().bold() and cur_fmt.font().bold():
+            if not is_markdown_strong(prev_fmt) and is_markdown_strong(cur_fmt):
                 self._formats.append(Format(Type.bold, index))
             if not prev_fmt.font().italic() and cur_fmt.font().italic():
                 self._formats.append(Format(Type.italic, index))
@@ -200,7 +200,7 @@ class InlineFormatResolver:
                 self._formats.append(Format(Type.link, index, attrs={'href': cur_fmt.anchorHref()}))
 
             # Handle closing tags
-            if cur_fmt.font().bold() and not next_fmt.font().bold():
+            if is_markdown_strong(cur_fmt) and not is_markdown_strong(next_fmt):
                 self._last_of_type(Type.bold).end = index
             if cur_fmt.font().italic() and not next_fmt.font().italic():
                 self._last_of_type(Type.italic).end = index

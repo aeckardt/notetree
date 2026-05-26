@@ -200,7 +200,7 @@ class HtmlImporter:
                 self._end_line(cursor)
                 return
             case 'strong' | 'b':
-                self.char_fmt.setFontWeight(QFont.Weight.Bold)
+                self.char_fmt.setFontWeight(STRONG_FONT_WEIGHT)
                 fmt_changed = True
             case 'em' | 'i':
                 self.char_fmt.setFontItalic(True)
@@ -258,7 +258,7 @@ class HtmlImporter:
                 # Adjust charformat
                 heading_level = int(tag[1])
                 self.block_fmt.setHeadingLevel(heading_level)
-                self.char_fmt.setFontWeight(QFont.Weight.Bold)
+                self.char_fmt.setFontWeight(HEADING_FONT_WEIGHT)
                 self.char_fmt.setProperty(QTextCharFormat.Property.FontSizeAdjustment, 4 - heading_level)
                 fmt_changed = True
 

@@ -11,6 +11,9 @@ from PyQt6.QtGui import (QTextListFormat, QColor, QTextBlockFormat, QTextCharFor
 ListStyle = QTextListFormat.Style
 TOP_LEVEL_LIST_STYLE = ListStyle.ListDisc.value
 LOWER_LEVEL_LIST_STYLE = ListStyle.ListCircle.value
+NORMAL_FONT_WEIGHT = QFont.Weight.Normal
+HEADING_FONT_WEIGHT = QFont.Weight.DemiBold
+STRONG_FONT_WEIGHT = QFont.Weight.Bold
 LINK_COLOR = QColor('#1c37e5')
 ALT_LINK_COLOR = QColor('#fa6c13') # is currently not used
 LIST_PADDING = "  "
@@ -106,3 +109,10 @@ horizontal_ruler_color = getattr(style_module, 'HORIZONTAL_RULER_COLOR', None)
 # Needs to be initialized after QGuiApplication starts running
 default_char_format = None
 default_font_pointsize = None
+
+# -----------------------------------------------
+# 4. Encapsulated formatting logic
+# -----------------------------------------------
+
+def is_markdown_strong(char_fmt: QTextCharFormat) -> bool:
+    return int(char_fmt.fontWeight()) >= int(STRONG_FONT_WEIGHT)
