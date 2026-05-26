@@ -1,35 +1,46 @@
 from dataclasses import dataclass
+from enum import IntEnum
 import re
 
 from PyQt6.QtGui import (QTextDocument, QTextCursor, QTextBlockFormat, QTextCharFormat, QTextFormat, QFont)
 
 from notetree.texteditor.inlineformat.html_style import *
-from notetree.texteditor.markdown.inlineparser import *
+from notetree.texteditor.markdown.inlineparser import MarkdownInlineParser, InlineNode
 from notetree.texteditor.style import *
 
 @dataclass
 class BlockToken:
-    class Type(int):
-        heading = 0
-        list_item = 1
-        horizontal_rule = 2
-        paragraph = 3
-        blank = 4
-    type: Type  # 'heading', 'list_item', 'paragraph', etc.
+    class Type(IntEnum):
+        HEADING = 0
+        LIST_ITEM = 1
+        HORIZONTAL_RULE = 2
+        PARAGRAPH = 3
+        BLANK = 4
+    type: Type  # 'HEADING', 'LIST_ITEM', 'PARAGRAPH', etc.
     level: int | None = None   # For heading or list depth
     children: list["InlineNode"] | None = None
 
+HEADING_RE = re.compile(r"^(#{1,4})\s+(.*)")
+UNORDERED_LIST_RE = re.compile(r"^[-*]\s+(.*)")
+HORIZONTAL_RULE = "---"
+
 class MarkdownImporter:
     """
-    A lightweight minimal Markdown parser for loading richtext to a QTextDocument.
-    Currently implemented features for this Markdown parser are:
-    - headings (with hashtag)
-    - unordered lists
-    - inline styles like bold, italic (only with asterisk)
-    - links
-    - the HTML tags 'ins' for underline and 'span' for font-size changes
-    Possible extensions should go along with extended funcionalities of the class TextEditor.
+    Imports NoteTree's Markdown focused subset into a QTextDocument.
+
+    Supported block elements:
+    - headings levels 1-4
+    - unordered list items
+    - horizontal rules
+    - paragraphs and blank lines
+
+    Inline content is parsed by MarkdownInlineParser, including emphasis,
+    links, underline tags and supported span styles.
+
+    The supported syntax follows the current TextEditor feature set
+    rather than full CommonMark compatibility.
     """
+
     def __init__(self, markdown_input: str):
         global default_char_format
         if not default_char_format:
@@ -43,8 +54,8 @@ class MarkdownImporter:
         Imports the Markdown input either into a new document.
         You can insert the document to an existing one using QTextDocumentFragment.
         """
-        # Parse input into tokens (which are technically already a tree)
-        tokens = self._tokenize(self.input)
+        # Parse input into block tokens (which are technically already a tree)
+        tokens = self._parse_blocks(self.input)
 
         # Create new document
         document = QTextDocument()
@@ -74,15 +85,15 @@ class MarkdownImporter:
     def _render_blocks(self, cursor: QTextCursor, tokens: list[BlockToken]):
         Type = BlockToken.Type
 
-        # Iterate over all block tokens.
+        # Iterate over all block tokens
         for token in tokens:
-            # Add a new line for each block, except for the first.
+            # Add a new line for each block, except for the first
             if not self.at_beginning:
                 self._new_line(cursor)
             else:
                 self.at_beginning = False
 
-            if token.type == Type.list_item:
+            if token.type == Type.LIST_ITEM:
                 # Insert two spaces, because the bullet is usually pretty tightly squeezed onto the text
                 # And there is unfortunately no simple styling that can change that
                 cursor.insertText('  ', QTextCharFormat(default_char_format))
@@ -107,29 +118,30 @@ class MarkdownImporter:
                 # Add item to list
                 self.current_list.add(cursor.block())
 
-            elif token.type == Type.heading:
+            elif token.type == Type.HEADING:
                 # Adjust heading level and charformat
                 self.block_fmt.setHeadingLevel(token.level)
                 self.char_fmt.setFontWeight(QFont.Weight.Bold)
                 self.char_fmt.setProperty(QTextCharFormat.Property.FontSizeAdjustment, 4 - token.level)
 
-            elif token.type == Type.horizontal_rule:
+            elif token.type == Type.HORIZONTAL_RULE:
                 # Set horizontal rule property for this block
                 self.block_fmt.setProperty(QTextFormat.Property.BlockTrailingHorizontalRulerWidth, horizontal_ruler_width)
                 if horizontal_ruler_color is not None:
                     self.block_fmt.setProperty(QTextFormat.Property.BackgroundBrush, horizontal_ruler_color)
 
-            elif token.type == Type.paragraph:
+            elif token.type == Type.PARAGRAPH:
                 # Set indent level for paragraph
                 self.block_fmt.setIndent(token.level)
 
-            # For blanks there is nothing else to do!
+            # For blanks there is nothing else to do
+            # Since a new line has already been added
 
             if token.children:
                 # Render line nodes
                 self._render_inlines(cursor, token.children)
 
-            if token.type == Type.heading:
+            if token.type == Type.HEADING:
                 # Revert char format before new block for better rendering of list bullets
                 self.char_fmt.setFontWeight(QFont.Weight.Normal)
                 self.char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
@@ -141,15 +153,15 @@ class MarkdownImporter:
         Type = InlineNode.Type
 
         def apply_node_style(node: InlineNode, char_format: QTextCharFormat):
-            if node.type == Type.strong:
+            if node.type == Type.STRONG:
                 char_format.setFontWeight(QFont.Weight.Bold)
-            elif node.type == Type.emph:
+            elif node.type == Type.EMPH:
                 char_format.setFontItalic(True)
-            elif node.type == Type.inline_link:
+            elif node.type == Type.INLINE_LINK:
                 char_format.setAnchor(True)
                 char_format.setAnchorHref(node.attrs['href'])
                 char_format.setForeground(LINK_COLOR)
-            elif node.type == Type.html_tag:
+            elif node.type == Type.HTML_TAG:
                 match node.content:
                     case 'ins':
                         char_format.setFontUnderline(True)
@@ -164,7 +176,7 @@ class MarkdownImporter:
 
         # Render inline tokens recursively
         for token in nodes:
-            if token.type == Type.text:
+            if token.type == Type.TEXT:
                 cursor.insertText(token.content, self.char_fmt)
             elif token.children:
                 # Save current format and apply changes
@@ -199,43 +211,59 @@ class MarkdownImporter:
         # Setting the char format at the end of the line can affect rendering
         cursor.setCharFormat(self.char_fmt)
 
-    def _tokenize(self, markdown_input: str) -> list[BlockToken]:
-        Type = BlockToken.Type
-
+    def _parse_blocks(self, markdown_input: str) -> list[BlockToken]:
         lines = markdown_input.splitlines()
-        tokens = []
-        for line in lines:
-            stripped = line.lstrip()
-            indent = len(line) - len(stripped)
+        return [self._parse_block_line(line) for line in lines]
 
-            if match := re.match(r'^(#{1,4})\s+(.*)', stripped):
-                content = match.group(2)
-                tokens.append(BlockToken(
-                    type=Type.heading,
-                    level=len(match.group(1)),
-                    children=self._parse_inline(content)
-                ))
-            elif re.match(r'^[-*]\s+', stripped):
-                content = re.sub(r'^[-*]\s+', '', stripped)
-                tokens.append(BlockToken(
-                    type=Type.list_item,
-                    level=indent // 2,  # 2-space indentation = one level
-                    children=self._parse_inline(content)
-                ))
-            elif stripped == '---':
-                tokens.append(BlockToken(type=Type.horizontal_rule))
-            elif stripped == '':
-                # empty line → paragraph break
-                tokens.append(BlockToken(type=Type.blank))
-            else:
-                level = indent // 4  # 4-space indentation = one level
-                content = line[level * 4:]
-                tokens.append(BlockToken(
-                    type=Type.paragraph,
-                    level=level,
-                    children=self._parse_inline(content)
-                ))
-        return tokens
+    def _parse_block_line(self, line: str) -> BlockToken:
+        """
+        Parse one physical Markdown line into one block token.
+
+        This method only determines the block type and indentation level.
+        Inline formatting for paragraphs is delegated to MarkdownInlineParser.
+        """
+        BlockType = BlockToken.Type
+
+        stripped = line.lstrip()
+        indent = len(line) - len(stripped)
+
+        # Headings must be recognized before paragraphs. NoteTree currently
+        # supports heading levels 1-4.
+        if match := HEADING_RE.match(stripped):
+            content = match.group(2)
+            return BlockToken(
+                type=BlockType.HEADING,
+                level=len(match.group(1)),
+                children=self._parse_inline(content),
+            )
+
+        # Unordered list items use two spaces as one nesting level. This
+        # matches the indentation behavior used by the TextEditor.
+        if match := UNORDERED_LIST_RE.match(stripped):
+            content = match.group(1)
+            return BlockToken(
+                type=BlockType.LIST_ITEM,
+                level=indent // 2,
+                children=self._parse_inline(content),
+            )
+
+        # A horizontal rule is only recognized in the exact form exported
+        # by NoteTree.
+        if stripped == HORIZONTAL_RULE:
+            return BlockToken(type=BlockType.HORIZONTAL_RULE)
+
+        # Blank lines are preserved as empty blocks.
+        if not stripped:
+            return BlockToken(type=BlockType.BLANK)
+
+        # Indented text is a paragraph.
+        level = indent // 4
+        content = line[level * 4:]
+        return BlockToken(
+            type=BlockType.PARAGRAPH,
+            level=level,
+            children=self._parse_inline(content),
+        )
 
     def _parse_inline(self, text: str) -> list[InlineNode]:
         return MarkdownInlineParser(text).ast_root.children

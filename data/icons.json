@@ -214,5 +214,23 @@
         "index": 43,
         "name": "bewölktes Wetter",
         "path": "fugue/weather-cloudy.png"
+    },
+    {
+        "design": 0,
+        "index": 44,
+        "name": "Besteck",
+        "path": "fugue/cutlery.png"
+    },
+    {
+        "design": 0,
+        "index": 45,
+        "name": "Film",
+        "path": "fugue/film.png"
+    },
+    {
+        "design": 0,
+        "index": 46,
+        "name": "Film Youtube",
+        "path": "fugue/film-youtube.png"
     }
 ]

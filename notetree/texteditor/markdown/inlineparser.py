@@ -9,13 +9,13 @@ import urllib.parse
 @dataclass
 class InlineNode:
     class Type(IntEnum):
-        container = 0
-        strong = 1
-        emph = 2
-        inline_link = 3
-        image = 4
-        html_tag = 5
-        text = 6
+        CONTAINER = 0
+        STRONG = 1
+        EMPH = 2
+        INLINE_LINK = 3
+        IMAGE = 4
+        HTML_TAG = 5
+        TEXT = 6
     type: Type
     content: str | None = None  # Contains text or HTML tag name
     attrs: dict | None = None
@@ -72,13 +72,13 @@ class MarkdownInlineParser:
         if self.input:
             self.parse()
         else:
-            self.ast_root = InlineNode(InlineNode.Type.container, children=[])
+            self.ast_root = InlineNode(InlineNode.Type.CONTAINER, children=[])
 
     def parse(self):
         MarkerType = ScopeMarker.Type
         NodeType = InlineNode.Type
 
-        self.ast_root = InlineNode(NodeType.container, children=[])
+        self.ast_root = InlineNode(NodeType.CONTAINER, children=[])
         self.current_parent = self.ast_root
         self.open_scope_stack: list[ScopeMarker] = []
 
@@ -196,10 +196,10 @@ class MarkdownInlineParser:
                     node = open_marker.node
                     if open_marker.marker.content == '![':
                         node.attrs = {'src': res_path}
-                        node.type = NodeType.image
+                        node.type = NodeType.IMAGE
                     else:
                         node.attrs = {'href': res_path}
-                        node.type = NodeType.inline_link
+                        node.type = NodeType.INLINE_LINK
 
                     # Integrate node into tree
                     self.integrate_node(node)
@@ -222,12 +222,12 @@ class MarkdownInlineParser:
                         if not open_marker:
                             self.integrate_marker_as_text(marker)
                             continue
-                        open_marker.node.type = NodeType.html_tag
+                        open_marker.node.type = NodeType.HTML_TAG
                         open_marker.node.content = open_marker.marker.tag
                         open_marker.node.attrs = open_marker.marker.attrs
                         self.integrate_node(open_marker.node)
                     elif not marker.can_open and not marker.can_close:
-                        marker.node.type = NodeType.html_tag
+                        marker.node.type = NodeType.HTML_TAG
                         marker.node.content = marker.marker.tag
                         marker.node.attrs = marker.marker.attrs
                         self.integrate_node(marker.node)
@@ -292,7 +292,7 @@ class MarkdownInlineParser:
             # and then add the right side marker as child to the left side
 
             # First, create a node for the right side marker and finalize it
-            right_marker.node = InlineNode(InlineNode.Type.container, children=left_marker.node.children)
+            right_marker.node = InlineNode(InlineNode.Type.CONTAINER, children=left_marker.node.children)
             self.finalize_emphasis_marker(right_marker)
 
             # Second, make the right side node a child of the left side node
@@ -324,13 +324,13 @@ class MarkdownInlineParser:
         node = marker.node
         if count % 2 == 1:
             if count > 1:
-                node.type = NodeType.strong
-                sub_node = InlineNode(NodeType.emph, children=node.children)
+                node.type = NodeType.STRONG
+                sub_node = InlineNode(NodeType.EMPH, children=node.children)
                 node.children = [sub_node]
             else:
-                node.type = NodeType.emph
+                node.type = NodeType.EMPH
         else:
-            node.type = NodeType.strong
+            node.type = NodeType.STRONG
 
     def try_parse_html_tag(self) -> ScopeMarker | None:
         Type = ScopeMarker.Type
@@ -485,7 +485,7 @@ class MarkdownInlineParser:
             # Later it will either
             # - be integrated into the tree or 
             # - it will be flattened and the marker will be treated as text
-            marker.node = InlineNode(InlineNode.Type.container, children=[])
+            marker.node = InlineNode(InlineNode.Type.CONTAINER, children=[])
         self.current_parent = marker.node
 
         # Push marker to the stack
@@ -506,7 +506,7 @@ class MarkdownInlineParser:
 
     def integrate_marker_as_text(self, marker: ScopeMarker):
         # Append text node with marker characters to the tree
-        self.integrate_node(InlineNode(InlineNode.Type.text, content=marker.marker.content))
+        self.integrate_node(InlineNode(InlineNode.Type.TEXT, content=marker.marker.content))
 
         if marker.node:
             # Flatten the structure by adding all the children from the floating
@@ -519,7 +519,7 @@ class MarkdownInlineParser:
     def flush_text(self):
         if self.text:
             # Append new text node to the tree
-            self.integrate_node(InlineNode(InlineNode.Type.text, content=self.text))
+            self.integrate_node(InlineNode(InlineNode.Type.TEXT, content=self.text))
 
             # Clear text
             self.text = ''

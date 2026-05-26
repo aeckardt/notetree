@@ -5,9 +5,10 @@ import sys
 import webbrowser
 import subprocess
 import platform
+import pathlib
 from dataclasses import dataclass
 
-from PyQt6.QtCore import (QSize, Qt, pyqtSlot, pyqtSignal, QMimeData)
+from PyQt6.QtCore import (QSize, Qt, pyqtSlot, pyqtSignal, QMimeData, QTimer)
 from PyQt6.QtGui import (QTextCharFormat, QTextListFormat, QFont, QTextCursor, QFontDatabase,
                          QColor, QImage, QKeyEvent, QCursor, QTextCursor, QTextFormat, QTextDocument, 
                          QKeySequence, QGuiApplication, QTextDocumentFragment, QAction)
@@ -19,6 +20,7 @@ from notetree.common.widgets.emojipicker import EmojiPickerDialog
 from notetree.common.widgets.gradientbutton import GradientButton
 from notetree.texteditor.html.exporter import HtmlExporter
 from notetree.texteditor.html.importer import HtmlImporter
+from notetree.texteditor.markdown.exporter import MarkdownExporter
 from notetree.texteditor.style import *
 from notetree.texteditor.widgets.linkeditor import LinkEditorDialog
 from notetree.texteditor.widgets.toolbarseparator import ToolBarSeparator
@@ -629,7 +631,7 @@ class TextEditor(QTextEdit):
         return font.pointSize()
 
     @staticmethod
-    def _system_open_file(dir, filename):
+    def _system_open_file(dir: pathlib.Path | None, filename: str):
         if dir is not None:
             # Temporarily change working directory
             prev_dir = os.getcwd()
@@ -1054,11 +1056,24 @@ class TextEditor(QTextEdit):
 
         # Export text as HTML
         selection_as_html = HtmlExporter(self.document(), cursor).output
-        mime_data.setData('text/html', bytearray(selection_as_html, encoding='utf-8'))
+        mime_data.setData("text/html", bytearray(selection_as_html, encoding="utf-8"))
 
         # Export text as plain
         fragment = QTextDocumentFragment(cursor)
         mime_data.setText(fragment.toPlainText())
+
+        QGuiApplication.clipboard().setMimeData(mime_data)
+
+    def copy_as_markdown(self):
+        """
+        Copy the whole document as a Markdown string.
+        """
+        mime_data = QMimeData()
+
+        # Export text as Markdown
+        markdown = MarkdownExporter(self.document()).output
+        mime_data.setText(markdown)
+        mime_data.setData("text/markdown", bytearray(markdown, encoding="utf-8"))
 
         QGuiApplication.clipboard().setMimeData(mime_data)
 
@@ -1103,6 +1118,7 @@ class TextEditor(QTextEdit):
     def _clipboard_update(self):
         self.paste_action.setEnabled(self.canPaste())
 
+
 class TextEditorWidget(QWidget):
     # -----------------------------------------------
     # 1. Constructor / Initialization
@@ -1133,7 +1149,7 @@ class TextEditorWidget(QWidget):
 
         self.setLayout(layout)
 
-    def _add_tool_button(self, img_name, action: QAction):
+    def _add_tool_button(self, img_name, action: QAction) -> GradientButton:
         btn = GradientButton(QImage(f'icons/fontawesome/{img_name}-24.png', 'PNG'),
                              base_color = QColor('#ebebeb'),
                              checked_color = QColor('#c7c7c7'))
@@ -1152,14 +1168,20 @@ class TextEditorWidget(QWidget):
         self.toolbar.addWidget(btn)
         return btn
 
-    def _add_ext_tool_button(self, img_name, clicked_fnc = None, enabled = True,
-                             checkable = False, tooltip: str = None):
-        filepath = f'icons/fontawesome/{img_name}-24.png'
+    def _load_icon_image(self, img_name):
+        filepath = f"icons/fontawesome/{img_name}-24.png"
+
         if not os.path.exists(filepath):
-            filepath = f'icons/{img_name}-24.png'
-        btn = GradientButton(QImage(filepath, 'PNG'),
-                            base_color = QColor('#ebebeb'),
-                            checked_color = QColor('#c7c7c7'))
+            filepath = f"icons/{img_name}-24.png"
+
+        return QImage(filepath, "PNG")
+
+    def _add_ext_tool_button(self, img_name, clicked_fnc = None, enabled = True,
+                             checkable = False, tooltip: str = None) -> GradientButton:
+
+        btn = GradientButton(self._load_icon_image(img_name),
+                             base_color = QColor('#ebebeb'),
+                             checked_color = QColor('#c7c7c7'))
         if not enabled:
             btn.setEnabled(False)
         if checkable:
@@ -1177,11 +1199,9 @@ class TextEditorWidget(QWidget):
     def _setup_toolbar(self):
         self._add_separator()
 
+        # Undo / Redo
         self.undo_button = self._add_tool_button('undo', self.textedit.undo_action)
         self.redo_button = self._add_tool_button('redo', self.textedit.redo_action)
-
-        self.pdf_export_button = self._add_ext_tool_button('file-pdf', self.textedit.export_as_pdf,
-                                                           tooltip = self.tr("Export as PDF..."))
 
         self._add_separator()
 
@@ -1231,11 +1251,30 @@ class TextEditorWidget(QWidget):
 
         self._add_separator()
 
+        # Insert link / emoji
         self.link_button = self._add_ext_tool_button('link', self.textedit.insert_hyperlink,
                                                      tooltip = self.tr("Insert link..."))
         self.emoji_button = self._add_tool_button('face-grin', self.textedit.insert_emoji_action)
 
         self._add_separator()
+
+        # # Copy document as Markdown
+        # self.markdown_copy_button = self._add_ext_tool_button('markdown', self._copy_as_markdown,
+        #                                                          tooltip = self.tr("Copy as Markdown"))
+        # self._markdown_icon = self.markdown_copy_button.image
+        # self._copy_success_icon = self._load_icon_image("check")
+
+        # self._markdown_copy_feedback_timer = QTimer(self)
+        # self._markdown_copy_feedback_timer.setSingleShot(True)
+        # self._markdown_copy_feedback_timer.timeout.connect(
+        #     self._restore_markdown_copy_button
+        # )
+
+        # # Export as PDF
+        # self.pdf_export_button = self._add_ext_tool_button('file-pdf', self.textedit.export_as_pdf,
+        #                                                    tooltip = self.tr("Export as PDF..."))
+
+        # self._add_separator()
 
     # -----------------------------------------------
     # 2. Private methods - QTextEdit slots
@@ -1284,3 +1323,15 @@ class TextEditorWidget(QWidget):
                     self.heading_lvl3_button.set_checked(True)
                 case 4:
                     self.heading_lvl4_button.set_checked(True)
+
+    # def _copy_as_markdown(self):
+    #     self.textedit.copy_as_markdown()
+    #     self._show_markdown_copy_feedback()
+
+    # def _show_markdown_copy_feedback(self):
+    #     self.markdown_copy_button.set_image(self._copy_success_icon)
+
+    #     self._markdown_copy_feedback_timer.start(1200)
+
+    # def _restore_markdown_copy_button(self):
+    #     self.markdown_copy_button.set_image(self._markdown_icon)

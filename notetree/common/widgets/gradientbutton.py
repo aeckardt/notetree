@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 from PyQt6.QtCore import (QEvent, QSize, QRect, QRectF, QPoint, Qt, pyqtSignal)
 from PyQt6.QtGui import (QImage, QPainter, QPainterPath, QColor, QFontMetrics, QLinearGradient)
 from PyQt6.QtWidgets import (QWidget, QGraphicsDropShadowEffect)
@@ -5,7 +7,7 @@ from PyQt6.QtWidgets import (QWidget, QGraphicsDropShadowEffect)
 SHADOW_BLUR_RADIUS = 15
 SHADOW_COLOR = QColor("#8eb7f1")
 
-def to_grayscale(image : QImage, brightness_factor):
+def to_grayscale(image: QImage, brightness_factor):
     width = image.width()
     height = image.height()
 
@@ -23,16 +25,16 @@ def to_grayscale(image : QImage, brightness_factor):
     return grayscale_image
 
 class GradientButton(QWidget):
-    class State(int):
-        Disabled = 1
-        Inactive = 2
-        Active = 3
-        Clicked = 4
-        Checked = 5
+    class State(IntEnum):
+        DISABLED = 1
+        INACTIVE = 2
+        ACTIVE = 3
+        CLICKED = 4
+        CHECKED = 5
 
-    class Type(int):
-        ImageButton = 1
-        TextButton = 2
+    class Type(IntEnum):
+        IMAGE_BUTTON = 1
+        TEXT_BUTTON = 2
 
     clicked = pyqtSignal()
 
@@ -40,18 +42,18 @@ class GradientButton(QWidget):
     # 1. Constructor / Initialization
     # -----------------------------------------------
 
-    def __init__(self, image: QImage = None, use_grayscale = True,
+    def __init__(self, image: QImage | None = None, use_grayscale=True,
                  text: str = '', text_alignment: Qt.AlignmentFlag = Qt.AlignmentFlag.AlignCenter,
-                 focus_widget = False, base_color = QColor('#ebebeb'), checked_color = None, 
-                 parent = None):
+                 focus_widget=False, base_color=QColor('#ebebeb'),
+                 checked_color: QColor | None = None, parent: QWidget | None = None):
         super().__init__(parent)
 
         if image is not None:
             if text != '':
                 raise Exception('No implementation available for GradientButton with both image and text')
-            self.type = GradientButton.Type.ImageButton
+            self.type = GradientButton.Type.IMAGE_BUTTON
         else:
-            self.type = GradientButton.Type.TextButton
+            self.type = GradientButton.Type.TEXT_BUTTON
 
         self.checkable = False
         self.checked = False
@@ -69,13 +71,13 @@ class GradientButton(QWidget):
 
         self.alignment = text_alignment
 
-        if self.type == GradientButton.Type.ImageButton:
+        if self.type == GradientButton.Type.IMAGE_BUTTON:
             if use_grayscale:
                 self.image = to_grayscale(image, 0.5)
             else:
                 self.image = image
             self.disabled_image = to_grayscale(image, 5)
-        elif self.type == GradientButton.Type.TextButton:
+        elif self.type == GradientButton.Type.TEXT_BUTTON:
             if text != '':
                 self.set_text(text)
             else:
@@ -91,15 +93,12 @@ class GradientButton(QWidget):
             self.shadow_enabled = False
         self.set_base_color(base_color, checked_color)
 
-        self._set_state(GradientButton.State.Inactive)
+        self._set_state(GradientButton.State.INACTIVE)
 
         self.shadow.setBlurRadius(SHADOW_BLUR_RADIUS)
         self.shadow.setOffset(1, 0)
         self.shadow.setColor(SHADOW_COLOR)
         self.setGraphicsEffect(self.shadow)
-
-    def __del__(self):
-        pass
 
     # -----------------------------------------------
     # 2. Property management
@@ -111,12 +110,25 @@ class GradientButton(QWidget):
         self.text = text
         self.text_pos = self._calc_text_pos()
 
+    def set_image(self, image: QImage, use_grayscale=True):
+        if self.type != GradientButton.Type.IMAGE_BUTTON:
+            raise RuntimeError("set_image() is only available for image buttons")
+
+        if use_grayscale:
+            self.image = to_grayscale(image, 0.5)
+        else:
+            self.image = image
+
+        self.disabled_image = to_grayscale(image, 5)
+        self.image_pos = self._calc_image_pos()
+        self.update()
+
     def setFont(self, font):
         fm = QFontMetrics(self.font())
         self.label_rect = fm.boundingRect(self.text)
         super().setFont(font)
 
-    def set_base_color(self, color, checked_color = None):
+    def set_base_color(self, color, checked_color=None):
         self.colors = [self._adjust_color(color, i * 16) for i in range(5)]
         if checked_color:
             self.checked_colors = [self._adjust_color(checked_color, i * 8) for i in range(5)]
@@ -156,7 +168,7 @@ class GradientButton(QWidget):
             return
 
         self.state = new_state
-        if new_state == GradientButton.State.Disabled:
+        if new_state == GradientButton.State.DISABLED:
             self.gradient.setColorAt(0,    QColor("#d7d7d7"))
             self.gradient.setColorAt(0.15, QColor("#dfdfdf"))
             self.gradient.setColorAt(0.5,  QColor("#e7e7e7"))
@@ -164,7 +176,7 @@ class GradientButton(QWidget):
             self.gradient.setColorAt(1,    QColor("#f3f3f3"))
             self.offset = 0
             self.text_color = QColor("#555555")
-        elif new_state == GradientButton.State.Clicked:
+        elif new_state == GradientButton.State.CLICKED:
             self.gradient.setColorAt(0,    self.colors[0])
             self.gradient.setColorAt(0.15, self.colors[1])
             self.gradient.setColorAt(0.5,  self.colors[2])
@@ -172,7 +184,7 @@ class GradientButton(QWidget):
             self.gradient.setColorAt(1,    self.colors[4])
             self.offset = 1
             self.text_color = QColor("#111111")
-        elif new_state == GradientButton.State.Checked:
+        elif new_state == GradientButton.State.CHECKED:
             self.gradient.setColorAt(0,    self.checked_colors[0])
             self.gradient.setColorAt(0.15, self.checked_colors[1])
             self.gradient.setColorAt(0.5,  self.checked_colors[2])
@@ -180,7 +192,7 @@ class GradientButton(QWidget):
             self.gradient.setColorAt(1,    self.checked_colors[4])
             self.offset = 1
             self.text_color = QColor("#111111")
-        elif new_state in [GradientButton.State.Inactive, GradientButton.State.Active]:
+        elif new_state in [GradientButton.State.INACTIVE, GradientButton.State.ACTIVE]:
             self.gradient.setColorAt(0,    self.colors[4])
             self.gradient.setColorAt(0.15, self.colors[3])
             self.gradient.setColorAt(0.5,  self.colors[2])
@@ -189,7 +201,7 @@ class GradientButton(QWidget):
             self.offset = 0
             self.text_color = QColor("#111111")
 
-        if self.type == GradientButton.Type.ImageButton:
+        if self.type == GradientButton.Type.IMAGE_BUTTON:
             self.image_pos = self._calc_image_pos()
         else:
             self.text_pos = self._calc_text_pos()
@@ -197,7 +209,7 @@ class GradientButton(QWidget):
         self._update_shadow_state()
 
     def _update_shadow_state(self):
-        if self.state in [GradientButton.State.Inactive, GradientButton.State.Disabled]:
+        if self.state in [GradientButton.State.INACTIVE, GradientButton.State.DISABLED]:
             self.shadow.setEnabled(False)
         else:
             self.shadow.setEnabled(self.shadow_enabled)
@@ -207,16 +219,16 @@ class GradientButton(QWidget):
         old_state = self.state
 
         if not self.isEnabled():
-            self._set_state(GradientButton.State.Disabled)
+            self._set_state(GradientButton.State.DISABLED)
         elif self.mouse_pressed or self.key_state != 0:
             # Set clicked state if mouse button or Space is pressed
-            self._set_state(GradientButton.State.Clicked)
+            self._set_state(GradientButton.State.CLICKED)
         elif self.checkable and self.checked:
-            self._set_state(GradientButton.State.Checked)
+            self._set_state(GradientButton.State.CHECKED)
         elif self.hasFocus():
-            self._set_state(GradientButton.State.Active)
+            self._set_state(GradientButton.State.ACTIVE)
         else:
-            self._set_state(GradientButton.State.Inactive)
+            self._set_state(GradientButton.State.INACTIVE)
 
         if old_state != self.state:
             self.update()
@@ -237,8 +249,8 @@ class GradientButton(QWidget):
         painter.setPen(QColor("#dfdfdf"))
         painter.drawPath(path)
 
-        if self.type == GradientButton.Type.ImageButton:
-            if self.state != GradientButton.State.Disabled:
+        if self.type == GradientButton.Type.IMAGE_BUTTON:
+            if self.state != GradientButton.State.DISABLED:
                 painter.drawImage(self.image_pos, self.image)
             elif self.disabled_image is not None:
                 painter.drawImage(self.image_pos, self.disabled_image)
@@ -253,13 +265,13 @@ class GradientButton(QWidget):
         self.gradient.setStart(0, 0)
         self.gradient.setFinalStop(0, self.height())
 
-        if self.type == GradientButton.Type.ImageButton:
+        if self.type == GradientButton.Type.IMAGE_BUTTON:
             self.image_pos = self._calc_image_pos()
         else:
             self.text_pos = self._calc_text_pos()
 
     def minimumSizeHint(self):
-        if self.type == GradientButton.Type.ImageButton:
+        if self.type == GradientButton.Type.IMAGE_BUTTON:
             return self.image.rect().size() + QSize(6, 6)
         elif self.text != '':
             return self.label_rect.size() + QSize(12, 6)
@@ -267,7 +279,7 @@ class GradientButton(QWidget):
             return QSize(1, 1)
 
     def sizeHint(self):
-        if self.type == GradientButton.Type.ImageButton:
+        if self.type == GradientButton.Type.IMAGE_BUTTON:
             return self.image.rect().size() + QSize(12, 10)
         elif self.text != '':
             return self.label_rect.size() + QSize(12, 6)

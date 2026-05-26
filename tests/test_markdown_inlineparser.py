@@ -133,36 +133,36 @@ def test_markdown_inlineparser():
         output = ''
 
         match node.type:
-            case Type.strong:
+            case Type.STRONG:
                 output += '<strong>'
-            case Type.emph:
+            case Type.EMPH:
                 output += '<em>'
-            case Type.inline_link:
+            case Type.INLINE_LINK:
                 output += f'<a href="{node.attrs['href']}">'
-            case Type.image:
+            case Type.IMAGE:
                 output += f'<img src="{node.attrs['src']}">'
-            case Type.html_tag:
+            case Type.HTML_TAG:
                 attr_str = ''
                 if node.attrs:
                     for attr_name in node.attrs.keys():
                         attr_str += f' {attr_name}="{node.attrs[attr_name]}"'
                 output += f'<{node.content}{attr_str}>'
-            case Type.text:
+            case Type.TEXT:
                 return node.content
 
         for child in node.children:
             output += generate_ast_html(child)
 
         match node.type:
-            case Type.strong:
+            case Type.STRONG:
                 output += '</strong>'
-            case Type.emph:
+            case Type.EMPH:
                 output += '</em>'
-            case Type.inline_link:
+            case Type.INLINE_LINK:
                 output += '</a>'
-            case Type.image:
+            case Type.IMAGE:
                 output += '</img>'
-            case Type.html_tag:
+            case Type.HTML_TAG:
                 output += f'</{node.content}>'
 
         return output

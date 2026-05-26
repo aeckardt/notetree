@@ -1,10 +1,10 @@
 import pathlib
 
 from PyQt6.QtCore import (QMetaObject, Qt, QItemSelectionModel, QModelIndex, QCoreApplication,
-                          QFileInfo, pyqtSlot)
+                          QFileInfo, QTimer, pyqtSlot)
 from PyQt6.QtGui import (QCloseEvent, QKeySequence, QAction)
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QSplitter, QMessageBox, QMenuBar, QMenu,
-                             QFileDialog)
+                             QFileDialog, QLabel)
 
 from notetree.common.utils.errormessage import show_error_msg
 from notetree.common.utils.settings import settings
@@ -89,6 +89,7 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.centralwidget)
 
         self._setup_menu()
+        self._setup_toast()
         self.setWindowTitle(self.tr("NoteTree"))
 
         QMetaObject.connectSlotsByName(self)
@@ -106,32 +107,34 @@ class MainWindow(QMainWindow):
         # Setup menubar
         self.menubar = QMenuBar(self)
         self.menubar.setObjectName("menubar")
+
         self.file_menu = QMenu(self.menubar)
         self.edit_menu = QMenu(self.menubar)
+        self.document_menu = QMenu(self.menubar)
 
         # New action
         self.new_action = QAction(self)
-        self.new_action.setObjectName("NewAction")
+        self.new_action.setObjectName("new_action")
         self.new_action.setText(self.tr("New File..."))
         self.new_action.setShortcut(QKeySequence.StandardKey.New)
         self.new_action.triggered.connect(self._on_new)
 
         # Open action
         self.open_action = QAction(self)
-        self.open_action.setObjectName("openAction")
+        self.open_action.setObjectName("open_action")
         self.open_action.setText(self.tr("Open..."))
         self.open_action.setShortcut(QKeySequence.StandardKey.Open)
         self.open_action.triggered.connect(self._on_open)
 
         # Open recent action
         self.recent_files_menu = QMenu(self.file_menu)
-        self.recent_files_menu.setObjectName("menuRecentFiles")
+        self.recent_files_menu.setObjectName("menu_recent_files")
         self.recent_files_menu.setTitle(self.tr("Open Recent"))
         self._setup_recent_file_actions()
 
         # Save action
         self.save_action = QAction(self)
-        self.save_action.setObjectName("saveAction")
+        self.save_action.setObjectName("save_action")
         self.save_action.setText(self.tr("Save"))
         self.save_action.setEnabled(False)
         self.save_action.setShortcut(QKeySequence.StandardKey.Save)
@@ -140,21 +143,21 @@ class MainWindow(QMainWindow):
 
         # Save As action
         self.save_as_action = QAction(self)
-        self.save_as_action.setObjectName("saveAsAction")
+        self.save_as_action.setObjectName("save_as_action")
         self.save_as_action.setText(self.tr("Save As..."))
         self.save_as_action.setShortcut(QKeySequence.StandardKey.SaveAs)
         self.save_as_action.triggered.connect(self._on_save_as)
 
         # Exit action
         self.exit_action = QAction(self)
-        self.exit_action.setObjectName("exitAction")
+        self.exit_action.setObjectName("exit_action")
         self.exit_action.setText(self.tr("Exit"))
         self.exit_action.setMenuRole(QAction.MenuRole.QuitRole)
         self.exit_action.setShortcut(QKeySequence.StandardKey.Quit)
         self.exit_action.triggered.connect(self.close)
 
         # Assemble file menu
-        self.file_menu.setObjectName("menuFile")
+        self.file_menu.setObjectName("menu_file")
         self.file_menu.setTitle(self.tr("File"))
         self.file_menu.addAction(self.new_action)
         self.file_menu.addAction(self.open_action)
@@ -176,10 +179,33 @@ class MainWindow(QMainWindow):
         self.edit_icons_action.triggered.connect(self._on_edit_icons)
 
         # Assemble edit menu
-        self.edit_menu.setObjectName("menuEdit")
+        self.edit_menu.setObjectName("menu_edit")
         self.edit_menu.setTitle(self.tr("Edit"))
         self.edit_menu.addAction(self.edit_icons_action)
         self.menubar.addAction(self.edit_menu.menuAction())
+
+        # -----------------------------------------------------------------
+
+        # Copy as Markdown menu
+        self.copy_as_markdown_action = QAction(self)
+        self.copy_as_markdown_action.setObjectName("copy_as_markdown")
+        self.copy_as_markdown_action.setText(self.tr("Copy as Markdown"))
+        self.copy_as_markdown_action.triggered.connect(self._on_copy_as_markdown)
+
+        # Export as PDF menu
+        self.export_as_pdf_action = QAction(self)
+        self.export_as_pdf_action.setObjectName("export_as_pdf")
+        self.export_as_pdf_action.setText(self.tr("Export as PDF..."))
+        self.export_as_pdf_action.triggered.connect(self._on_export_as_pdf)
+
+        # Assemble document menu
+        self.document_menu.setObjectName("menu_document")
+        self.document_menu.setTitle(self.tr("Document"))
+        self.document_menu.addAction(self.copy_as_markdown_action)
+        self.document_menu.addAction(self.export_as_pdf_action)
+        self.menubar.addAction(self.document_menu.menuAction())
+
+        # -----------------------------------------------------------------
 
         self.setMenuBar(self.menubar)
 
@@ -192,7 +218,7 @@ class MainWindow(QMainWindow):
 
         for n in range(MAX_RECENT_FILES):
             open_recent_action = QAction(self)
-            open_recent_action.setObjectName(f'openRecent{n}Action')
+            open_recent_action.setObjectName(f'open_recent{n}_action')
             open_recent_action.setVisible(False)
             if n <= 9:
                 keymod = (n + 1) % 10
@@ -202,6 +228,25 @@ class MainWindow(QMainWindow):
             open_recent_action.triggered.connect(open_recent(n))
 
         self._update_recent_action_list()
+
+    def _setup_toast(self):
+        self.toast_label = QLabel(self)
+        self.toast_label.setObjectName("toast_label")
+        self.toast_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.toast_label.hide()
+
+        self.toast_label.setStyleSheet("""
+        QLabel#toast_label {
+            background-color: rgba(40, 40, 40, 210);
+            color: white;
+            border-radius: 6px;
+            padding: 6px 12px;
+        }
+        """)
+
+        self.toast_timer = QTimer(self)
+        self.toast_timer.setSingleShot(True)
+        self.toast_timer.timeout.connect(self.toast_label.hide)
 
     # -----------------------------------------------
     # 2. Event handlers
@@ -278,6 +323,15 @@ class MainWindow(QMainWindow):
         editor = IconManagerDialog(self.tr("Edit icons"))
         editor.exec()
 
+    @pyqtSlot()
+    def _on_copy_as_markdown(self):
+        self.editor.textedit.copy_as_markdown()
+        self.show_toast(self.tr("Markdown copied"))
+
+    @pyqtSlot()
+    def _on_export_as_pdf(self):
+        self.editor.textedit.export_as_pdf()
+
     # -----------------------------------------------
     # 4. Open / Save file
     # -----------------------------------------------
@@ -320,13 +374,13 @@ class MainWindow(QMainWindow):
         self.editor.textedit.document().setModified(False)
         self.editor.textedit.setFocus()
 
+        # Pass on file directory to TextEditor object
+        root_directory = pathlib.Path(filename).parent.resolve()
+        self.editor.textedit.root_directory = root_directory
+
         # Change window title according to filename
         stripped_name = QFileInfo(filename).fileName()
         self.setWindowTitle(self.tr("NoteTree") + f" - {stripped_name}")
-
-        # Pass on file directory to treeview and notes_edit
-        root_directory = pathlib.Path(filename).parent.resolve()
-        self.editor.textedit.root_directory = root_directory
 
         # Update recent files list
         self._append_to_recent_files_list(filename)
@@ -420,7 +474,25 @@ class MainWindow(QMainWindow):
                 self.recent_file_actions[-n - 1].setVisible(False)
 
     # -----------------------------------------------
-    # 6. Private methods - DocumentTreeWidget slots
+    # 6. Toast / status message
+    # -----------------------------------------------
+
+    def show_toast(self, text: str):
+        self.toast_label.setText(text)
+        self.toast_label.adjustSize()
+
+        margin = 16
+        x = self.width() - self.toast_label.width() - margin
+        y = self.height() - self.toast_label.height() - margin
+
+        self.toast_label.move(x, y)
+        self.toast_label.show()
+        self.toast_label.raise_()
+
+        self.toast_timer.start(1200)
+
+    # -----------------------------------------------
+    # 7. Private methods - DocumentTreeWidget slots
     # -----------------------------------------------
 
     @pyqtSlot(QModelIndex, QModelIndex)
@@ -443,7 +515,7 @@ class MainWindow(QMainWindow):
             self.session.set_recently_opened_document(None)
 
     # -----------------------------------------------
-    # 7. Private methods - TableOfConents slots
+    # 8. Private methods - TableOfConents slots
     # -----------------------------------------------
 
     @pyqtSlot(QModelIndex)
@@ -465,7 +537,7 @@ class MainWindow(QMainWindow):
         self.editor.textedit.setTextCursor(cursor)
 
     # -----------------------------------------------
-    # 8. Static/Utility Methods
+    # 9. Static/Utility Methods
     # -----------------------------------------------
 
     def _get_document_node(self, index: QModelIndex) -> DocumentNode | None:
