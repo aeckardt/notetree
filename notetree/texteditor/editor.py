@@ -44,10 +44,11 @@ class TextEditor(QTextEdit):
     def __init__(self, parent=None):
         QTextEdit.__init__(self, parent)
 
-        # Initialize default char format (QGuiApplication needs to be running)
-        global default_char_format
+        # Initialize default char format (QGuiApplication needs to be initialized)
+        global default_char_format, default_font_pointsize
         if not default_char_format:
             default_char_format = init_default_char_format()
+            default_font_pointsize = init_default_font_pointsize()
 
         # Connect signals
         self.currentCharFormatChanged.connect(self._on_current_charformat_changed)
@@ -311,6 +312,42 @@ class TextEditor(QTextEdit):
         # End edit block
         cursor.endEditBlock()
 
+    def _apply_heading_char_format(self, block: QTextBlock, heading_level: int):
+        updates = []
+
+        it = block.begin()
+        while not it.atEnd():
+            fragment = it.fragment()
+
+            if fragment.isValid():
+                char_fmt = QTextCharFormat(fragment.charFormat())
+
+                # Set / remove heading-specific visual formatting.
+                if heading_level > 0:
+                    char_fmt.setFontWeight(QFont.Weight.Bold)
+                    char_fmt.setProperty(QTextCharFormat.Property.FontSizeAdjustment, 4 - heading_level)
+                else:
+                    char_fmt.setFontWeight(QFont.Weight.Normal)
+                    char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
+
+                updates.append((
+                    fragment.position(),
+                    fragment.length(),
+                    char_fmt
+                ))
+
+            it += 1
+
+        local_cursor = QTextCursor(self.document())
+
+        for position, length, char_fmt in updates:
+            local_cursor.setPosition(position)
+            local_cursor.setPosition(
+                position + length,
+                QTextCursor.MoveMode.KeepAnchor,
+            )
+            local_cursor.setCharFormat(char_fmt)
+
     # -----------------------------------------------
     # 5. Private methods - Text insertion
     # -----------------------------------------------
@@ -450,11 +487,7 @@ class TextEditor(QTextEdit):
         cursor.setBlockFormat(block_fmt)
 
         # Apply charformat modification
-        char_fmt = cursor.charFormat()
-        char_fmt.setFontWeight(QFont.Weight.Bold if level > 0 else QFont.Weight.Normal)
-        char_fmt.setProperty(QTextCharFormat.Property.FontSizeAdjustment, 4 - level)
-        cursor.select(QTextCursor.SelectionType.LineUnderCursor)
-        cursor.setCharFormat(char_fmt)
+        self._apply_heading_char_format(cursor.block(), level)
 
         cursor.endEditBlock()
 
@@ -488,10 +521,9 @@ class TextEditor(QTextEdit):
 
         if block_fmt.headingLevel() > 0:
             block_fmt.setHeadingLevel(0)
-            self._clear_heading_char_format(block)
+            self._apply_heading_char_format(block, 0)
 
         # Reset paragraph-level formatting that should not survive
-        # "standard block format".
         block_fmt.setIndent(0)
         block_cursor.setBlockFormat(block_fmt)
 
@@ -509,7 +541,7 @@ class TextEditor(QTextEdit):
             block_fmt.setHeadingLevel(0)
 
             # Remove char format used for headings
-            self._clear_heading_char_format(block)
+            self._apply_heading_char_format(block, 0)
 
         list = cursor.currentList()
         if not list:
@@ -609,31 +641,22 @@ class TextEditor(QTextEdit):
 
     def _insert_list_padding(self, block: QTextBlock):
         # Insert two spaces to list item before text
-        if not block.text().startswith("  "):
+        if not block.text().startswith(LIST_PADDING):
             local_cursor = QTextCursor(block)
             local_cursor.setPosition(local_cursor.block().position())
-            local_cursor.insertText('  ')
+            local_cursor.insertText(LIST_PADDING)
 
     def _remove_list_padding(self, block: QTextBlock):
         # Check if block starts with padding
-        if not block.text().startswith("  "):
+        if not block.text().startswith(LIST_PADDING):
             return
 
         # Remove padding
         local_cursor = QTextCursor(block)
         local_cursor.setPosition(block.position())
-        local_cursor.setPosition(block.position() + 2, QTextCursor.MoveMode.KeepAnchor)
+        local_cursor.setPosition(block.position() + LIST_PADDING_LENGTH,
+                                 QTextCursor.MoveMode.KeepAnchor)
         local_cursor.removeSelectedText()
-
-    def _clear_heading_char_format(self, block: QTextBlock):
-        block_cursor = QTextCursor(block)
-        block_cursor.select(QTextCursor.SelectionType.LineUnderCursor)
-
-        char_fmt = QTextCharFormat()
-        char_fmt.setFontWeight(QFont.Weight.Normal)
-        char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
-
-        block_cursor.mergeCharFormat(char_fmt)
 
     def _set_list_style(self, cursor: QTextCursor, style):
         # Check if styles are different
@@ -823,7 +846,7 @@ class TextEditor(QTextEdit):
             block_fmt = cursor.blockFormat()
             if block_fmt.objectIndex() != -1:
                 cursor.insertBlock(block_fmt)
-                cursor.insertText('  ')
+                cursor.insertText(LIST_PADDING)
             else:
                 cursor.insertBlock(default_block_format, default_char_format)
             cursor.endEditBlock()
@@ -835,9 +858,9 @@ class TextEditor(QTextEdit):
             list = cursor.currentList()
             if list:
                 block = cursor.block()
-                if cursor.position() - block.position() == 2:
+                if cursor.position() - block.position() == LIST_PADDING_LENGTH:
                     it = block.begin()
-                    if it.fragment().text().startswith('  '):
+                    if it.fragment().text().startswith(LIST_PADDING):
                         self.toggle_list()
                         return
 
@@ -945,13 +968,13 @@ class TextEditor(QTextEdit):
         # Skip over whitespaces after list bullet
         list = block.textList()
         if list:
-            if new_pos - block.position() < 2:
+            if new_pos - block.position() < LIST_PADDING_LENGTH:
                 it = block.begin()
-                if it.fragment().text().startswith('  '):
+                if it.fragment().text().startswith(LIST_PADDING):
                     if op == MoveOp.Left and block.position() > 0:
                         new_pos = block.position() - 1
                     else:
-                        new_pos = block.position() + 2
+                        new_pos = block.position() + LIST_PADDING_LENGTH
 
         if new_pos == pos:
             # The position hasn't changed
@@ -1193,18 +1216,18 @@ class TextEditorWidget(QWidget):
         self.toolbar.addWidget(btn)
         return btn
 
-    def _load_icon_image(self, img_name):
-        filepath = f"icons/fontawesome/{img_name}-24.png"
+    def _load_icon_image(self, icon_name: str):
+        filepath = f"icons/fontawesome/{icon_name}-24.png"
 
         if not os.path.exists(filepath):
-            filepath = f"icons/{img_name}-24.png"
+            filepath = f"icons/{icon_name}-24.png"
 
         return QImage(filepath, "PNG")
 
-    def _add_ext_tool_button(self, img_name, clicked_fnc=None, enabled=True,
+    def _add_ext_tool_button(self, icon_name: str, clicked_fnc=None, enabled=True,
                              checkable=False, tooltip: str = None) -> GradientButton:
 
-        btn = GradientButton(self._load_icon_image(img_name),
+        btn = GradientButton(self._load_icon_image(icon_name),
                              base_color=QColor('#ebebeb'),
                              checked_color=QColor('#c7c7c7'))
         if not enabled:
@@ -1263,18 +1286,16 @@ class TextEditorWidget(QWidget):
                                                              checkable=True, tooltip=self.tr("Heading Level 3"))
         self.heading_lvl4_button = self._add_ext_tool_button('heading4', lambda: self._set_heading_level(4),
                                                              checkable=True, tooltip=self.tr("Heading Level 4"))
+        self.remove_style_button = self._add_ext_tool_button('paragraph', self.textedit.remove_block_style,
+                                                             tooltip=self.tr("Paragraph"))
         self.list_button = self._add_ext_tool_button('list_ul', self.textedit.toggle_list, checkable = True,
                                                      tooltip=self.tr("List"))
-        self.remove_style_button = self._add_ext_tool_button('font', self.textedit.remove_block_style,
-                                                             tooltip=self.tr("Standard Blockformat"))
 
         self._add_separator()
 
         # Indent
-        self.indent_more_button = self._add_ext_tool_button('indent', self.textedit.indent_selection,
-                                                            tooltip=self.tr("Increase list indent"))
-        self.indent_less_button = self._add_ext_tool_button('indent-flipped', self.textedit.unindent_selection,
-                                                            tooltip=self.tr("Decrease list indent"))
+        self.indent_more_button = self._add_tool_button('indent', self.textedit.more_indent_action)
+        self.indent_less_button = self._add_tool_button('indent-flipped', self.textedit.less_indent_action)
 
         self._add_separator()
 

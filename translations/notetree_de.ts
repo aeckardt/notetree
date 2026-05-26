@@ -431,93 +431,93 @@ Wollen Sie die Änderungen speichern?</translation>
 <context>
     <name>TextEditor</name>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="79"/>
+        <location filename="../notetree/texteditor/editor.py" line="80"/>
         <source>Undo</source>
         <translation>Rückgängig</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="85"/>
+        <location filename="../notetree/texteditor/editor.py" line="86"/>
         <source>Redo</source>
         <translation>Wiederholen</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="91"/>
+        <location filename="../notetree/texteditor/editor.py" line="92"/>
         <source>Cut</source>
         <translation>Ausschneiden</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="95"/>
+        <location filename="../notetree/texteditor/editor.py" line="96"/>
         <source>Copy</source>
         <translation>Kopieren</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="99"/>
+        <location filename="../notetree/texteditor/editor.py" line="100"/>
         <source>Paste</source>
         <translation>Einfügen</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="104"/>
+        <location filename="../notetree/texteditor/editor.py" line="105"/>
         <source>Delete</source>
         <translation>Entfernen</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="108"/>
+        <location filename="../notetree/texteditor/editor.py" line="109"/>
         <source>Bold</source>
         <translation>Fett</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="114"/>
+        <location filename="../notetree/texteditor/editor.py" line="115"/>
         <source>Italic</source>
         <translation>Kursiv</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="120"/>
+        <location filename="../notetree/texteditor/editor.py" line="121"/>
         <source>Underline</source>
         <translation>Unterstrichen</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="126"/>
+        <location filename="../notetree/texteditor/editor.py" line="127"/>
         <source>Increase font size</source>
         <translation>Text vergrößern</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="131"/>
+        <location filename="../notetree/texteditor/editor.py" line="132"/>
         <source>Decrease font size</source>
         <translation>Text verkleinern</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="136"/>
-        <source>Less indent</source>
-        <translation>Einzug verkleinern</translation>
+        <location filename="../notetree/texteditor/editor.py" line="137"/>
+        <source>Decrease list indent</source>
+        <translation>Listeneinzug verkleinern</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="140"/>
-        <source>More indent</source>
-        <translation>Einzug vergrößern</translation>
+        <location filename="../notetree/texteditor/editor.py" line="141"/>
+        <source>Increase list indent</source>
+        <translation>Listeneinzug vergrößern</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="346"/>
-        <location filename="../notetree/texteditor/editor.py" line="145"/>
+        <location filename="../notetree/texteditor/editor.py" line="383"/>
+        <location filename="../notetree/texteditor/editor.py" line="146"/>
         <source>Edit link</source>
         <translation>Link bearbeiten</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="149"/>
+        <location filename="../notetree/texteditor/editor.py" line="150"/>
         <source>Insert emoji...</source>
         <translation>Emoji einfügen...</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="328"/>
+        <location filename="../notetree/texteditor/editor.py" line="365"/>
         <source>Insert link</source>
         <translation>Link einfügen</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="372"/>
+        <location filename="../notetree/texteditor/editor.py" line="409"/>
         <source>Insert emoji</source>
         <translation>Emoji einfügen</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="751"/>
+        <location filename="../notetree/texteditor/editor.py" line="799"/>
         <source>Export as PDF</source>
         <translation>Als PDF exportieren</translation>
     </message>
@@ -525,49 +525,39 @@ Wollen Sie die Änderungen speichern?</translation>
 <context>
     <name>TextEditorWidget</name>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="1240"/>
+        <location filename="../notetree/texteditor/editor.py" line="1282"/>
         <source>Heading Level 1</source>
         <translation>Heading Level 1</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="1242"/>
+        <location filename="../notetree/texteditor/editor.py" line="1284"/>
         <source>Heading Level 2</source>
         <translation>Heading Level 2</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="1244"/>
+        <location filename="../notetree/texteditor/editor.py" line="1286"/>
         <source>Heading Level 3</source>
         <translation>Heading Level 3</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="1246"/>
+        <location filename="../notetree/texteditor/editor.py" line="1288"/>
         <source>Heading Level 4</source>
         <translation>Heading Level 4</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="1248"/>
+        <location filename="../notetree/texteditor/editor.py" line="1290"/>
+        <source>Paragraph</source>
+        <translation>Absatz</translation>
+    </message>
+    <message>
+        <location filename="../notetree/texteditor/editor.py" line="1292"/>
         <source>List</source>
         <translation>Liste</translation>
     </message>
     <message>
-        <location filename="../notetree/texteditor/editor.py" line="1250"/>
-        <source>Standard Blockformat</source>
-        <translation>Standard Blockformat</translation>
-    </message>
-    <message>
-        <location filename="../notetree/texteditor/editor.py" line="1256"/>
+        <location filename="../notetree/texteditor/editor.py" line="1304"/>
         <source>Insert link...</source>
         <translation>Link einfügen...</translation>
-    </message>
-    <message>
-        <location filename="../notetree/texteditor/editor.py" line="1263"/>
-        <source>Copy as Markdown</source>
-        <translation>Als Markdown kopieren</translation>
-    </message>
-    <message>
-        <location filename="../notetree/texteditor/editor.py" line="1275"/>
-        <source>Export as PDF...</source>
-        <translation>Als PDF exportieren...</translation>
     </message>
 </context>
 </TS>

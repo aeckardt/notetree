@@ -4,7 +4,9 @@ import urllib.parse
 
 from PyQt6.QtGui import (QTextDocument, QTextFormat, QTextCursor, QTextBlock)
 
-from notetree.texteditor.inlineformat.resolver import ExportableFragment, Format as InlineFormat, InlineFormatResolver
+from notetree.texteditor.inlineformat.resolver import (ExportableFragment, Format as InlineFormat,
+                                                       InlineFormatResolver)
+from notetree.texteditor.style import LIST_PADDING, LIST_PADDING_LENGTH
 
 @dataclass
 class Tag:
@@ -66,7 +68,7 @@ class MarkdownExporter:
     def _export_block(self, block: QTextBlock) -> str:
         block_format = block.blockFormat()
         heading_level = block_format.headingLevel()
-        list = block.textList()
+        text_list = block.textList()
 
         # Check for horizontal rule
         horizontal_rule = block_format.hasProperty(QTextFormat.Property.BlockTrailingHorizontalRulerWidth)
@@ -74,15 +76,46 @@ class MarkdownExporter:
             return '---'
 
         # Build prefix from block format
-        if list:
-            # Two spaces per indent level
-            indent = '  ' * block_format.indent()
+        if text_list:
+            indent = "  " * block_format.indent()
             prefix = f'{indent}* '
+            return prefix + self._export_inline_content(
+                block,
+                remove_two_spaces=True,
+            )
+
+        if 1 <= heading_level <= 4:
+            prefix = f'{"#" * heading_level} '
+            return prefix + self._export_inline_content(
+                block,
+                remove_two_spaces=False,
+                heading_level=heading_level,
+            )
+
+        return self._export_inline_content(
+            block,
+            remove_two_spaces=False,
+        )
+
+    def _export_block(self, block: QTextBlock) -> str:
+        block_format = block.blockFormat()
+        heading_level = block_format.headingLevel()
+        text_list = block.textList()
+
+        # Check for horizontal rule
+        horizontal_rule = block_format.hasProperty(QTextFormat.Property.BlockTrailingHorizontalRulerWidth)
+        if horizontal_rule:
+            return '---'
+
+        # Build prefix from block format
+        if text_list:
+            # Two spaces per list indent level
+            indent = "  " * block_format.indent()
+            prefix = f"{indent}* "
         elif 1 <= heading_level <= 4:
-            return f'{"#" * heading_level} {block.text()}'
+            prefix = f"{'#' * heading_level} "
         else:
-            # Four spaces per indent level
-            prefix = ''
+            prefix = ""
 
         # Resolve inline formats to be in the right order
         fragments = InlineFormatResolver(block, self._start, self._end).fragments
@@ -95,7 +128,8 @@ class MarkdownExporter:
             if not fragment.fragment.isValid():
                 break
 
-            fragment_text, remaining = self._export_fragment(fragment, at_block_begin and list)
+            fragment_text, remaining = self._export_fragment(fragment, at_block_begin and text_list,
+                                                             heading_level)
             line_text += fragment_text
 
             if remaining <= 0:
@@ -106,7 +140,8 @@ class MarkdownExporter:
 
         return prefix + line_text
 
-    def _export_fragment(self, ef: ExportableFragment, remove_two_spaces: bool) -> str:
+    def _export_fragment(self, ef: ExportableFragment, remove_two_spaces: bool,
+                         heading_level: int = 0) -> str:
         Type = InlineFormat.Type
 
         fragment = ef.fragment
@@ -114,8 +149,8 @@ class MarkdownExporter:
 
         # Remove two leading spaces from text, if it's a list point
         # They are automatically added for the sake of aesthetics
-        if remove_two_spaces and text.startswith('  '):
-            text = text[2:]
+        if remove_two_spaces and text.startswith(LIST_PADDING):
+            text = text[LIST_PADDING_LENGTH:]
 
         # Calculate selection boundaries within this fragment
         slice_left = max(0, self._start - fragment.position())
@@ -132,6 +167,10 @@ class MarkdownExporter:
         opening_tokens = []
         closing_tokens = []
         for fmt_change in ef.fmt_changes:
+            # Don't export font size changes if block format is a heading
+            if heading_level > 0 and fmt_change.type in [Type.bold, Type.pointsize]:
+                continue
+
             match fmt_change.type:
                 case Type.bold:
                     if fmt_change.open:

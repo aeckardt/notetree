@@ -94,9 +94,9 @@ class MarkdownImporter:
                 self.at_beginning = False
 
             if token.type == Type.LIST_ITEM:
-                # Insert two spaces, because the bullet is usually pretty tightly squeezed onto the text
+                # Insert padding, because the bullet is usually pretty tightly squeezed onto the text
                 # And there is unfortunately no simple styling that can change that
-                cursor.insertText('  ', QTextCharFormat(default_char_format))
+                cursor.insertText(LIST_PADDING, QTextCharFormat(default_char_format))
 
                 if not self.current_list:
                     if cursor.currentList():

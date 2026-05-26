@@ -1,7 +1,11 @@
 import sys
 
 from PyQt6.QtGui import (QTextListFormat, QColor, QTextBlockFormat, QTextCharFormat, QTextLength,
-                         QGuiApplication)
+                         QGuiApplication, QFont)
+
+# -----------------------------------------------
+# 1. Modifiable style constants
+# -----------------------------------------------
 
 # TextEditor styles
 ListStyle = QTextListFormat.Style
@@ -9,6 +13,8 @@ TOP_LEVEL_LIST_STYLE = ListStyle.ListDisc.value
 LOWER_LEVEL_LIST_STYLE = ListStyle.ListCircle.value
 LINK_COLOR = QColor('#1c37e5')
 ALT_LINK_COLOR = QColor('#fa6c13') # is currently not used
+LIST_PADDING = "  "
+LIST_PADDING_LENGTH = len(LIST_PADDING)
 
 # Optional TextEditor styles (remove to deactivate)
 DOCUMENT_INDENT_WIDTH = 30
@@ -18,6 +24,10 @@ BLOCK_TOP_MARGIN = 0
 BLOCK_BOTTOM_MARGIN = 2
 HORIZONTAL_RULER_WIDTH = '50%'
 HORIZONTAL_RULER_COLOR = QColor('#999')
+
+# -----------------------------------------------
+# 2. Initialization methods
+# -----------------------------------------------
 
 style_module = sys.modules[__name__]
 
@@ -82,6 +92,10 @@ def init_default_char_format() -> QTextCharFormat:
     if not QGuiApplication.instance():
         char_fmt.setFontPointSize(init_default_font_pointsize())
     return char_fmt
+
+# -----------------------------------------------
+# 3. Definition of constants that need init.
+# -----------------------------------------------
 
 # Default block format for TextEditor
 default_block_format = init_default_block_format()
