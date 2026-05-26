@@ -324,35 +324,33 @@ class TextEditor(QTextEdit):
     def _clear_markdown_strong_on_selection(self):
         cursor = self.textCursor()
 
-        # if not cursor.hasSelection():
-        #     fmt = QTextCharFormat()
-        #     fmt.setFontWeight(default_font_weight(cursor.block()))
-        #     self._merge_format_on_selection(fmt)
-        #     return
+        # Without a selection, formatting actions change the current typing format.
+        if not cursor.hasSelection():
+            fmt = QTextCharFormat()
+            fmt.setFontWeight(default_font_weight(cursor.block()))
+            self._merge_format_on_selection(fmt)
+            return
 
-        def _clear_markdown_strong(block: QTextBlock, char_fmt: QTextCharFormat) -> QTextCharFormat:
+        # Change selected text
+        def clear_strong_modifier(block: QTextBlock, char_fmt: QTextCharFormat) -> QTextCharFormat:
             base_weight = default_font_weight(block)
             if is_markdown_strong(char_fmt):
                 char_fmt.setFontWeight(base_weight)
             return char_fmt
-
-        self._apply_fragment_changes_to_selection(cursor, _clear_markdown_strong)
+        self._apply_fragment_changes_to_selection(cursor, clear_strong_modifier)
 
     def _apply_heading_char_format(self, block: QTextBlock, heading_level: int):
-        def _apply_heading_format(block: QTextBlock, char_fmt: QTextCharFormat) -> QTextCharFormat:
-            is_strong = is_markdown_strong(char_fmt)
-
+        def heading_format_modifier(block: QTextBlock, char_fmt: QTextCharFormat) -> QTextCharFormat:
             # Set / remove heading-specific visual formatting.
+            is_strong = is_markdown_strong(char_fmt)
             if heading_level > 0:
                 char_fmt.setFontWeight(STRONG_FONT_WEIGHT if is_strong else HEADING_FONT_WEIGHT)
                 char_fmt.setProperty(QTextCharFormat.Property.FontSizeAdjustment, 4 - heading_level)
             else:
                 char_fmt.setFontWeight(STRONG_FONT_WEIGHT if is_strong else NORMAL_FONT_WEIGHT)
                 char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
-
             return char_fmt
-
-        self._apply_fragment_changes_to_block(block, _apply_heading_format)
+        self._apply_fragment_changes_to_block(block, heading_format_modifier)
 
     def _clear_heading_char_format(self, block: QTextBlock):
         self._apply_heading_char_format(block, 0)
