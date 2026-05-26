@@ -239,13 +239,16 @@ class TextEditor(QTextEdit):
 
     @pyqtSlot()
     def toggle_bold(self):
+        cursor = self.textCursor()
+        base_weight = default_font_weight(cursor.block())
+
         # Watch out here:
-        # The checked state has already been changed when triggering the action
-        heading_lvl = self.textCursor().blockFormat().headingLevel()
-        if heading_lvl > 0:
-            new_font_weight = STRONG_FONT_WEIGHT if self.text_bold_action.isChecked() else HEADING_FONT_WEIGHT
-        else:
-            new_font_weight = STRONG_FONT_WEIGHT if not self.text_bold_action.isChecked() else NORMAL_FONT_WEIGHT
+        # The checked state has already been changed after triggering the action
+        new_font_weight = (
+            STRONG_FONT_WEIGHT
+            if self.text_bold_action.isChecked()
+            else base_weight
+        )
 
         fmt = QTextCharFormat()
         fmt.setFontWeight(new_font_weight)

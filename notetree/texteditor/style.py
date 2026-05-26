@@ -1,7 +1,7 @@
 import sys
 
 from PyQt6.QtGui import (QTextListFormat, QColor, QTextBlockFormat, QTextCharFormat, QTextLength,
-                         QGuiApplication, QFont)
+                         QGuiApplication, QFont, QTextBlock)
 
 # -----------------------------------------------
 # 1. Modifiable style constants
@@ -116,3 +116,8 @@ default_font_pointsize = None
 
 def is_markdown_strong(char_fmt: QTextCharFormat) -> bool:
     return int(char_fmt.fontWeight()) >= int(STRONG_FONT_WEIGHT)
+
+def default_font_weight(block: QTextBlock):
+    if block.blockFormat().headingLevel() > 0:
+        return HEADING_FONT_WEIGHT
+    return NORMAL_FONT_WEIGHT
