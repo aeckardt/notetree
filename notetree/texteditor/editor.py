@@ -7,6 +7,7 @@ import subprocess
 import platform
 import pathlib
 from dataclasses import dataclass
+from collections.abc import Callable
 
 from PyQt6.QtCore import (QSize, Qt, pyqtSlot, pyqtSignal, QMimeData)
 from PyQt6.QtGui import (QTextCharFormat, QTextListFormat, QFont, QTextCursor, QFontDatabase,
@@ -32,6 +33,8 @@ class Hyperlink:
     length: int
     text: str
     href: str
+
+FormatModifier = Callable[[QTextBlock, QTextCharFormat], QTextCharFormat]
 
 class TextEditor(QTextEdit):
     # -----------------------------------------------
@@ -321,11 +324,11 @@ class TextEditor(QTextEdit):
     def _clear_markdown_strong_on_selection(self):
         cursor = self.textCursor()
 
-        if not cursor.hasSelection():
-            fmt = QTextCharFormat()
-            fmt.setFontWeight(default_font_weight(cursor.block()))
-            self._merge_format_on_selection(fmt)
-            return
+        # if not cursor.hasSelection():
+        #     fmt = QTextCharFormat()
+        #     fmt.setFontWeight(default_font_weight(cursor.block()))
+        #     self._merge_format_on_selection(fmt)
+        #     return
 
         def _clear_markdown_strong(block: QTextBlock, char_fmt: QTextCharFormat) -> QTextCharFormat:
             base_weight = default_font_weight(block)
@@ -333,12 +336,7 @@ class TextEditor(QTextEdit):
                 char_fmt.setFontWeight(base_weight)
             return char_fmt
 
-        self._apply_fragment_changes(cursor, _clear_markdown_strong)
-
-        # # Keep the current typing format coherent after the operation.
-        # fmt = QTextCharFormat()
-        # fmt.setFontWeight(default_font_weight(cursor.block()))
-        # self.mergeCurrentCharFormat(fmt)
+        self._apply_fragment_changes_to_selection(cursor, _clear_markdown_strong)
 
     def _apply_heading_char_format(self, block: QTextBlock, heading_level: int):
         def _apply_heading_format(block: QTextBlock, char_fmt: QTextCharFormat) -> QTextCharFormat:
@@ -354,18 +352,38 @@ class TextEditor(QTextEdit):
 
             return char_fmt
 
-        self._apply_fragment_changes(block, _apply_heading_format)
+        self._apply_fragment_changes_to_block(block, _apply_heading_format)
 
     def _clear_heading_char_format(self, block: QTextBlock):
         self._apply_heading_char_format(block, 0)
 
-    def _apply_fragment_changes(self, cursor: QTextCursor, modified_format):
-        selection_start = cursor.selectionStart()
-        selection_end = cursor.selectionEnd()
+    def _apply_fragment_changes_to_selection(self, cursor: QTextCursor, modifier: FormatModifier):
+        cursor.beginEditBlock()
+        self._apply_fragment_changes_to_range(
+            self._selected_blocks(cursor),
+            cursor.selectionStart(),
+            cursor.selectionEnd(),
+            modifier,
+        )
+        cursor.endEditBlock()
 
+    def _apply_fragment_changes_to_block(self, block: QTextBlock, modifier: FormatModifier):
+        cursor = QTextCursor(block)
+        cursor.beginEditBlock()
+        self._apply_fragment_changes_to_range(
+            [block],
+            block.position(),
+            block.position() + block.length(),
+            modifier,
+        )
+        cursor.endEditBlock()
+
+    def _apply_fragment_changes_to_range(self, blocks: list[QTextBlock],
+                                         start_pos: int, end_pos: int,
+                                         modifier: FormatModifier):
         updates = []
 
-        for block in self._selected_blocks(cursor):
+        for block in blocks:
             it = block.begin()
             while not it.atEnd():
                 fragment = it.fragment()
@@ -374,28 +392,20 @@ class TextEditor(QTextEdit):
                     fragment_start = fragment.position()
                     fragment_end = fragment.position() + fragment.length()
 
-                    start = max(selection_start, fragment_start)
-                    end = min(selection_end, fragment_end)
+                    start = max(start_pos, fragment_start)
+                    end = min(end_pos, fragment_end)
 
                     if start < end:
                         char_fmt = QTextCharFormat(fragment.charFormat())
-                        updates.append((
-                            start,
-                            end,
-                            modified_format(block, char_fmt)
-                        ))
+                        updates.append((start, end, modifier(block, char_fmt)))
 
                 it += 1
-
-        cursor.beginEditBlock()
 
         local_cursor = QTextCursor(self.document())
         for start, end, char_fmt in updates:
             local_cursor.setPosition(start)
             local_cursor.setPosition(end, QTextCursor.MoveMode.KeepAnchor)
             local_cursor.setCharFormat(char_fmt)
-
-        cursor.endEditBlock()
 
     # -----------------------------------------------
     # 5. Private methods - Text insertion
