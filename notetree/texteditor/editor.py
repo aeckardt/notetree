@@ -8,10 +8,10 @@ import platform
 import pathlib
 from dataclasses import dataclass
 
-from PyQt6.QtCore import (QSize, Qt, pyqtSlot, pyqtSignal, QMimeData, QTimer)
+from PyQt6.QtCore import (QSize, Qt, pyqtSlot, pyqtSignal, QMimeData)
 from PyQt6.QtGui import (QTextCharFormat, QTextListFormat, QFont, QTextCursor, QFontDatabase,
                          QColor, QImage, QKeyEvent, QCursor, QTextCursor, QTextFormat, QTextDocument, 
-                         QKeySequence, QGuiApplication, QTextDocumentFragment, QAction)
+                         QKeySequence, QGuiApplication, QTextDocumentFragment, QAction, QTextBlock)
 from PyQt6.QtWidgets import (QWidget, QTextEdit, QVBoxLayout, QToolBar, QComboBox, QDialog,
                              QFileDialog, QMenu)
 from PyQt6.QtPrintSupport import (QPrinter)
@@ -41,7 +41,7 @@ class TextEditor(QTextEdit):
     font_changed = pyqtSignal(QFont)
     block_format_changed = pyqtSignal()
 
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         QTextEdit.__init__(self, parent)
 
         # Initialize default char format (QGuiApplication needs to be running)
@@ -68,8 +68,8 @@ class TextEditor(QTextEdit):
         self.root_directory = None
 
         # Initialize properties
-        self.anchor = None
-        self.ctrl_pressed = False
+        self._anchor = None
+        self._ctrl_pressed = False
 
         # Initialize X coordinate of the cursor for navigating with Up/Down keys
         self._cursor_x = -1
@@ -133,11 +133,11 @@ class TextEditor(QTextEdit):
         self.textsize_minus_action.triggered.connect(self._textsize_minus)
         self.addAction(self.textsize_minus_action)
 
-        self.less_indent_action = QAction(self.tr("Less indent"), self)
+        self.less_indent_action = QAction(self.tr("Decrease list indent"), self)
         self.less_indent_action.setShortcut(QKeySequence('Shift+Tab'))
         self.less_indent_action.triggered.connect(self.unindent_selection)
 
-        self.more_indent_action = QAction(self.tr("More indent"), self)
+        self.more_indent_action = QAction(self.tr("Increase list indent"), self)
         self.more_indent_action.setShortcut(QKeySequence('Tab'))
         self.more_indent_action.triggered.connect(self.indent_selection)
 
@@ -292,7 +292,7 @@ class TextEditor(QTextEdit):
             fmt.setFontPointSize(pointsize - 1)
             self._merge_format_on_selection(fmt)
 
-    def _merge_format_on_selection(self, format, selectword = False):
+    def _merge_format_on_selection(self, format, selectword=False):
         cursor = self.textCursor()
 
         # Begin edit block here
@@ -379,53 +379,52 @@ class TextEditor(QTextEdit):
     # -----------------------------------------------
 
     def indent_selection(self):
-        self._adjust_indentation(1)
+        self._adjust_list_indentation(1)
 
     def unindent_selection(self):
-        self._adjust_indentation(-1)
+        self._adjust_list_indentation(-1)
 
-    def _adjust_indentation(self, delta):
+    def _adjust_list_indentation(self, delta: int):
+        """
+        Indent/Unindent affects selected list items.
+        Non-list paragraphs inside the selection are ignored.
+        If no selected block is a list item, the action does nothing or is disabled.
+        """
         cursor = self.textCursor()
-        start = cursor.selectionStart()
-        end = cursor.selectionEnd()
+        blocks = self._selected_blocks(cursor)
 
-        local_cursor = QTextCursor(self.document())
-        local_cursor.setPosition(start)
+        list_blocks = [
+            block for block in blocks
+            if block.isValid() and block.textList() is not None
+        ]
 
-        blocks_to_modify = []
-
-        last_pos = -1
-        while local_cursor.position() <= end:
-            block = local_cursor.block()
-            block_fmt = block.blockFormat()
-            current_indent = block_fmt.indent()
-            new_indent = max(0, current_indent + delta)
-
-            if new_indent != current_indent:
-                blocks_to_modify.append((block, new_indent, current_indent))
-
-            last_pos = local_cursor.position()
-            local_cursor.movePosition(QTextCursor.MoveOperation.NextBlock)
-            if local_cursor.position() == last_pos:
-                break
-
-        if len(blocks_to_modify) == 0:
-            # No effective change, skip undo block
+        if not list_blocks:
             return
 
         cursor.beginEditBlock()
-        for block, new_indent, old_indent in blocks_to_modify:
-            block_fmt = block.blockFormat()
-            block_fmt.setIndent(new_indent)
-
-            block_cursor = QTextCursor(block)
-            block_cursor.setBlockFormat(block_fmt)
-
-            if old_indent == 0 and new_indent == 1:
-                self._set_list_style(block_cursor, LOWER_LEVEL_LIST_STYLE)
-            elif old_indent == 1 and new_indent == 0:
-                self._set_list_style(block_cursor, TOP_LEVEL_LIST_STYLE)
+        for block in list_blocks:
+            self._adjust_list_block_indentation(block, delta)
         cursor.endEditBlock()
+
+        self.block_format_changed.emit()
+
+    def _adjust_list_block_indentation(self, block: QTextBlock, delta: int):
+        block_fmt = block.blockFormat()
+        current_indent = block_fmt.indent()
+        new_indent = max(0, current_indent + delta)
+
+        if new_indent == current_indent:
+            return
+
+        block_fmt.setIndent(new_indent)
+
+        block_cursor = QTextCursor(block)
+        block_cursor.setBlockFormat(block_fmt)
+
+        if new_indent > 0:
+            self._set_list_style(block_cursor, LOWER_LEVEL_LIST_STYLE)
+        else:
+            self._set_list_style(block_cursor, TOP_LEVEL_LIST_STYLE)
 
     def set_heading_level(self, level: int):
         cursor = self.textCursor()
@@ -444,12 +443,7 @@ class TextEditor(QTextEdit):
             block_fmt.setObjectIndex(-1)
 
             # Remove the two extra indent spaces
-            if self._has_left_hand_indent(cursor):
-                block = cursor.block()
-                local_cursor = QTextCursor(block)
-                local_cursor.setPosition(block.position())
-                local_cursor.setPosition(block.position() + 2, QTextCursor.MoveMode.KeepAnchor)
-                local_cursor.removeSelectedText()
+            self._remove_list_padding(cursor.block())
 
         # Set heading level for block
         block_fmt.setHeadingLevel(level)
@@ -469,41 +463,37 @@ class TextEditor(QTextEdit):
     @pyqtSlot()
     def remove_block_style(self):
         cursor = self.textCursor()
+        blocks = self._selected_blocks(cursor)
 
         cursor.beginEditBlock()
 
-        block_fmt = cursor.blockFormat()
-        list = cursor.currentList()
-
-        if list:
-            # Remove list at current block
-            block = cursor.block()
-            list.remove(block)
-
-            block_fmt.setObjectIndex(-1)
-
-            # Remove the two extra indent spaces
-            if self._has_left_hand_indent(cursor):
-                local_cursor = QTextCursor(block)
-                local_cursor.setPosition(block.position())
-                local_cursor.setPosition(block.position() + 2, QTextCursor.MoveMode.KeepAnchor)
-                local_cursor.removeSelectedText()
-
-            cursor.setBlockFormat(block_fmt)
-
-        elif block_fmt.headingLevel() > 0:
-            block_fmt.setHeadingLevel(0)
-            cursor.setBlockFormat(block_fmt)
-
-            char_fmt = cursor.charFormat()
-            char_fmt.setFontWeight(QFont.Weight.Normal)
-            char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
-            cursor.select(QTextCursor.SelectionType.LineUnderCursor)
-            cursor.setCharFormat(char_fmt)
+        for block in blocks:
+            self._remove_block_style_from_block(block)
 
         cursor.endEditBlock()
-
         self.block_format_changed.emit()
+
+    def _remove_block_style_from_block(self, block: QTextBlock):
+        block_cursor = QTextCursor(block)
+        block_fmt = block.blockFormat()
+        text_list = block.textList()
+
+        if text_list:
+            text_list.remove(block)
+            block_fmt.setObjectIndex(-1)
+            block_fmt.setIndent(0)
+            block_fmt.clearProperty(QTextFormat.Property.ListStyle)
+
+            self._remove_list_padding(block)
+
+        if block_fmt.headingLevel() > 0:
+            block_fmt.setHeadingLevel(0)
+            self._clear_heading_char_format(block)
+
+        # Reset paragraph-level formatting that should not survive
+        # "standard block format".
+        block_fmt.setIndent(0)
+        block_cursor.setBlockFormat(block_fmt)
 
     @pyqtSlot()
     def toggle_list(self):
@@ -511,20 +501,15 @@ class TextEditor(QTextEdit):
 
         cursor.beginEditBlock()
 
-        block_fmt = cursor.blockFormat()
+        block = cursor.block()
+        block_fmt = block.blockFormat()
 
         if block_fmt.headingLevel() > 0:
             # Remove heading format
             block_fmt.setHeadingLevel(0)
 
-            local_cursor = QTextCursor(cursor.block())
-
-            char_fmt = local_cursor.charFormat()
-            char_fmt.setFontWeight(QFont.Weight.Normal)
-            char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
-
-            local_cursor.select(QTextCursor.SelectionType.LineUnderCursor)
-            local_cursor.setCharFormat(char_fmt)
+            # Remove char format used for headings
+            self._clear_heading_char_format(block)
 
         list = cursor.currentList()
         if not list:
@@ -540,11 +525,8 @@ class TextEditor(QTextEdit):
 
             block_fmt.setObjectIndex(list.objectIndex())
 
-            # Indent two extra spaces to make it look nicer
-            if not self._has_left_hand_indent(cursor):
-                local_cursor = QTextCursor(cursor.block())
-                local_cursor.setPosition(local_cursor.block().position())
-                local_cursor.insertText('  ')
+            # Indent two extra spaces to make it look more balanced
+            self._insert_list_padding(cursor.block())
 
         else:
             # Remove list at current block
@@ -554,11 +536,7 @@ class TextEditor(QTextEdit):
             block_fmt.setObjectIndex(-1)
 
             # Remove the two extra indent spaces
-            if self._has_left_hand_indent(cursor):
-                local_cursor = QTextCursor(block)
-                local_cursor.setPosition(block.position())
-                local_cursor.setPosition(block.position() + 2, QTextCursor.MoveMode.KeepAnchor)
-                local_cursor.removeSelectedText()
+            self._remove_list_padding(block)
 
         cursor.setBlockFormat(block_fmt)
         cursor.endEditBlock()
@@ -602,13 +580,60 @@ class TextEditor(QTextEdit):
 
         cursor.endEditBlock()
 
-    def _has_left_hand_indent(self, cursor: QTextCursor):
-        block = cursor.block()
-        it = block.begin()
-        if not it.atEnd():
-            fragment = it.fragment()
-            return fragment.text().startswith('  ')
-        return False
+    def _selected_blocks(self, cursor: QTextCursor) -> list[QTextBlock]:
+        start = cursor.selectionStart()
+        end = cursor.selectionEnd()
+
+        if start == end:
+            return [cursor.block()]
+
+        document = self.document()
+
+        first = document.findBlock(start)
+        last = document.findBlock(end)
+
+        # If the selection ends exactly at the beginning of a block, that block
+        # is not part of the user's visible selection.
+        if end == last.position() and last != first:
+            last = last.previous()
+
+        blocks = []
+        block = first
+        while block.isValid():
+            blocks.append(block)
+            if block == last:
+                break
+            block = block.next()
+
+        return blocks
+
+    def _insert_list_padding(self, block: QTextBlock):
+        # Insert two spaces to list item before text
+        if not block.text().startswith("  "):
+            local_cursor = QTextCursor(block)
+            local_cursor.setPosition(local_cursor.block().position())
+            local_cursor.insertText('  ')
+
+    def _remove_list_padding(self, block: QTextBlock):
+        # Check if block starts with padding
+        if not block.text().startswith("  "):
+            return
+
+        # Remove padding
+        local_cursor = QTextCursor(block)
+        local_cursor.setPosition(block.position())
+        local_cursor.setPosition(block.position() + 2, QTextCursor.MoveMode.KeepAnchor)
+        local_cursor.removeSelectedText()
+
+    def _clear_heading_char_format(self, block: QTextBlock):
+        block_cursor = QTextCursor(block)
+        block_cursor.select(QTextCursor.SelectionType.LineUnderCursor)
+
+        char_fmt = QTextCharFormat()
+        char_fmt.setFontWeight(QFont.Weight.Normal)
+        char_fmt.clearProperty(QTextCharFormat.Property.FontSizeAdjustment)
+
+        block_cursor.mergeCharFormat(char_fmt)
 
     def _set_list_style(self, cursor: QTextCursor, style):
         # Check if styles are different
@@ -858,9 +883,9 @@ class TextEditor(QTextEdit):
                 if self._move_cursor(direction[event.key()]):
                     return
 
-        self.ctrl_pressed = event.modifiers() & Qt.KeyboardModifier.ControlModifier
-        self.anchor = self.anchorAt(self.viewport().mapFromGlobal(QCursor.pos()))
-        if self.anchor and self.ctrl_pressed:
+        self._ctrl_pressed = event.modifiers() & Qt.KeyboardModifier.ControlModifier
+        self._anchor = self.anchorAt(self.viewport().mapFromGlobal(QCursor.pos()))
+        if self._anchor and self._ctrl_pressed:
             QGuiApplication.setOverrideCursor(Qt.CursorShape.PointingHandCursor)
         else:
             QGuiApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
@@ -951,59 +976,59 @@ class TextEditor(QTextEdit):
             self._cursor_x = -1
 
     def keyReleaseEvent(self, event: QKeyEvent):
-        if self.ctrl_pressed and ~event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.ctrl_pressed = False
+        if self._ctrl_pressed and ~event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self._ctrl_pressed = False
             QGuiApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
         QTextEdit.keyReleaseEvent(self, event)
 
     def mouseMoveEvent(self, event):
-        if not self.ctrl_pressed and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.ctrl_pressed = True
-        self.anchor = self.anchorAt(event.pos())
-        if self.anchor and self.ctrl_pressed:
+        if not self._ctrl_pressed and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self._ctrl_pressed = True
+        self._anchor = self.anchorAt(event.pos())
+        if self._anchor and self._ctrl_pressed:
             QGuiApplication.setOverrideCursor(Qt.CursorShape.PointingHandCursor)
         else:
             QGuiApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
         QTextEdit.mouseMoveEvent(self, event)
 
     def mousePressEvent(self, event):
-        if not self.ctrl_pressed and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.ctrl_pressed = True
-        self.anchor = self.anchorAt(event.pos())
-        if self.anchor and self.ctrl_pressed:
+        if not self._ctrl_pressed and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self._ctrl_pressed = True
+        self._anchor = self.anchorAt(event.pos())
+        if self._anchor and self._ctrl_pressed:
             QGuiApplication.setOverrideCursor(Qt.CursorShape.PointingHandCursor)
         else:
             QGuiApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
         QTextEdit.mousePressEvent(self, event)
 
     def mouseReleaseEvent(self, event):
-        if not self.ctrl_pressed and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
-            self.ctrl_pressed = True
-        self.anchor = self.anchorAt(event.pos())
-        if self.anchor and self.ctrl_pressed:
-            if len(self.anchor) > 8 and self.anchor[:8] == 'https://':
-                url = self.anchor
+        if not self._ctrl_pressed and event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self._ctrl_pressed = True
+        self._anchor = self.anchorAt(event.pos())
+        if self._anchor and self._ctrl_pressed:
+            if len(self._anchor) > 8 and self._anchor[:8] == 'https://':
+                url = self._anchor
 
-                self.anchor = None
-                self.ctrl_pressed = False
+                self._anchor = None
+                self._ctrl_pressed = False
                 QGuiApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
                 webbrowser.open(url)
 
                 return
 
-            elif len(self.anchor) > 7 and self.anchor[:7] == 'file://':
-                filename = self.anchor[7:]
+            elif len(self._anchor) > 7 and self._anchor[:7] == 'file://':
+                filename = self._anchor[7:]
 
-                self.anchor = None
-                self.ctrl_pressed = False
+                self._anchor = None
+                self._ctrl_pressed = False
                 QGuiApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
 
                 self._system_open_file(self.root_directory, filename)
 
                 return
 
-        elif self.anchor:
+        elif self._anchor:
             return
         QTextEdit.mouseReleaseEvent(self, event)
 
@@ -1124,7 +1149,7 @@ class TextEditorWidget(QWidget):
     # 1. Constructor / Initialization
     # -----------------------------------------------
 
-    def __init__(self, parent: QWidget = None):
+    def __init__(self, parent: QWidget=None):
         QWidget.__init__(self, parent)
 
         # Setup layout with toolbar and textedit
@@ -1151,8 +1176,8 @@ class TextEditorWidget(QWidget):
 
     def _add_tool_button(self, img_name, action: QAction) -> GradientButton:
         btn = GradientButton(QImage(f'icons/fontawesome/{img_name}-24.png', 'PNG'),
-                             base_color = QColor('#ebebeb'),
-                             checked_color = QColor('#c7c7c7'))
+                             base_color=QColor('#ebebeb'),
+                             checked_color=QColor('#c7c7c7'))
         if not action.isEnabled():
             btn.setEnabled(False)
         if action.isCheckable():
@@ -1176,12 +1201,12 @@ class TextEditorWidget(QWidget):
 
         return QImage(filepath, "PNG")
 
-    def _add_ext_tool_button(self, img_name, clicked_fnc = None, enabled = True,
-                             checkable = False, tooltip: str = None) -> GradientButton:
+    def _add_ext_tool_button(self, img_name, clicked_fnc=None, enabled=True,
+                             checkable=False, tooltip: str = None) -> GradientButton:
 
         btn = GradientButton(self._load_icon_image(img_name),
-                             base_color = QColor('#ebebeb'),
-                             checked_color = QColor('#c7c7c7'))
+                             base_color=QColor('#ebebeb'),
+                             checked_color=QColor('#c7c7c7'))
         if not enabled:
             btn.setEnabled(False)
         if checkable:
@@ -1229,52 +1254,36 @@ class TextEditorWidget(QWidget):
 
         self._add_separator()
 
-        # Indent
-        self.indent_more_button = self._add_tool_button('indent', self.textedit.more_indent_action)
-        self.indent_less_button = self._add_tool_button('indent-flipped', self.textedit.less_indent_action)
+        # Block styles
+        self.heading_lvl1_button = self._add_ext_tool_button('heading1', lambda: self._set_heading_level(1),
+                                                             checkable=True, tooltip=self.tr("Heading Level 1"))
+        self.heading_lvl2_button = self._add_ext_tool_button('heading2', lambda: self._set_heading_level(2),
+                                                             checkable=True, tooltip=self.tr("Heading Level 2"))
+        self.heading_lvl3_button = self._add_ext_tool_button('heading3', lambda: self._set_heading_level(3),
+                                                             checkable=True, tooltip=self.tr("Heading Level 3"))
+        self.heading_lvl4_button = self._add_ext_tool_button('heading4', lambda: self._set_heading_level(4),
+                                                             checkable=True, tooltip=self.tr("Heading Level 4"))
+        self.list_button = self._add_ext_tool_button('list_ul', self.textedit.toggle_list, checkable = True,
+                                                     tooltip=self.tr("List"))
+        self.remove_style_button = self._add_ext_tool_button('font', self.textedit.remove_block_style,
+                                                             tooltip=self.tr("Standard Blockformat"))
 
         self._add_separator()
 
-        # Block styles
-        self.heading_lvl1_button = self._add_ext_tool_button('heading1', lambda: self._set_heading_level(1),
-                                                             checkable = True, tooltip = self.tr("Heading Level 1"))
-        self.heading_lvl2_button = self._add_ext_tool_button('heading2', lambda: self._set_heading_level(2),
-                                                             checkable = True, tooltip = self.tr("Heading Level 2"))
-        self.heading_lvl3_button = self._add_ext_tool_button('heading3', lambda: self._set_heading_level(3),
-                                                             checkable = True, tooltip = self.tr("Heading Level 3"))
-        self.heading_lvl4_button = self._add_ext_tool_button('heading4', lambda: self._set_heading_level(4),
-                                                             checkable = True, tooltip = self.tr("Heading Level 4"))
-        self.list_button = self._add_ext_tool_button('list_ul', self.textedit.toggle_list, checkable = True,
-                                                     tooltip = self.tr("List"))
-        self.remove_style_button = self._add_ext_tool_button('font', self.textedit.remove_block_style,
-                                                             tooltip = self.tr("Standard Blockformat"))
+        # Indent
+        self.indent_more_button = self._add_ext_tool_button('indent', self.textedit.indent_selection,
+                                                            tooltip=self.tr("Increase list indent"))
+        self.indent_less_button = self._add_ext_tool_button('indent-flipped', self.textedit.unindent_selection,
+                                                            tooltip=self.tr("Decrease list indent"))
 
         self._add_separator()
 
         # Insert link / emoji
         self.link_button = self._add_ext_tool_button('link', self.textedit.insert_hyperlink,
-                                                     tooltip = self.tr("Insert link..."))
+                                                     tooltip=self.tr("Insert link..."))
         self.emoji_button = self._add_tool_button('face-grin', self.textedit.insert_emoji_action)
 
         self._add_separator()
-
-        # # Copy document as Markdown
-        # self.markdown_copy_button = self._add_ext_tool_button('markdown', self._copy_as_markdown,
-        #                                                          tooltip = self.tr("Copy as Markdown"))
-        # self._markdown_icon = self.markdown_copy_button.image
-        # self._copy_success_icon = self._load_icon_image("check")
-
-        # self._markdown_copy_feedback_timer = QTimer(self)
-        # self._markdown_copy_feedback_timer.setSingleShot(True)
-        # self._markdown_copy_feedback_timer.timeout.connect(
-        #     self._restore_markdown_copy_button
-        # )
-
-        # # Export as PDF
-        # self.pdf_export_button = self._add_ext_tool_button('file-pdf', self.textedit.export_as_pdf,
-        #                                                    tooltip = self.tr("Export as PDF..."))
-
-        # self._add_separator()
 
     # -----------------------------------------------
     # 2. Private methods - QTextEdit slots
@@ -1323,15 +1332,3 @@ class TextEditorWidget(QWidget):
                     self.heading_lvl3_button.set_checked(True)
                 case 4:
                     self.heading_lvl4_button.set_checked(True)
-
-    # def _copy_as_markdown(self):
-    #     self.textedit.copy_as_markdown()
-    #     self._show_markdown_copy_feedback()
-
-    # def _show_markdown_copy_feedback(self):
-    #     self.markdown_copy_button.set_image(self._copy_success_icon)
-
-    #     self._markdown_copy_feedback_timer.start(1200)
-
-    # def _restore_markdown_copy_button(self):
-    #     self.markdown_copy_button.set_image(self._markdown_icon)

@@ -26,7 +26,7 @@ HORIZONTAL_RULE = "---"
 
 class MarkdownImporter:
     """
-    Imports NoteTree's Markdown focused subset into a QTextDocument.
+    Imports NoteTree's focused Markdown subset into a QTextDocument.
 
     Supported block elements:
     - headings levels 1-4
@@ -37,8 +37,8 @@ class MarkdownImporter:
     Inline content is parsed by MarkdownInlineParser, including emphasis,
     links, underline tags and supported span styles.
 
-    The supported syntax follows the current TextEditor feature set
-    rather than full CommonMark compatibility.
+    The importer maps Markdown syntax onto the formatting features currently
+    implemented by NoteTree's TextEditor.
     """
 
     def __init__(self, markdown_input: str):
@@ -130,10 +130,6 @@ class MarkdownImporter:
                 if horizontal_ruler_color is not None:
                     self.block_fmt.setProperty(QTextFormat.Property.BackgroundBrush, horizontal_ruler_color)
 
-            elif token.type == Type.PARAGRAPH:
-                # Set indent level for paragraph
-                self.block_fmt.setIndent(token.level)
-
             # For blanks there is nothing else to do
             # Since a new line has already been added
 
@@ -220,7 +216,8 @@ class MarkdownImporter:
         Parse one physical Markdown line into one block token.
 
         This method only determines the block type and indentation level.
-        Inline formatting for paragraphs is delegated to MarkdownInlineParser.
+        Inline formatting is delegated to MarkdownInlineParser after the
+        block type has been identified.
         """
         BlockType = BlockToken.Type
 
@@ -256,13 +253,11 @@ class MarkdownImporter:
         if not stripped:
             return BlockToken(type=BlockType.BLANK)
 
-        # Indented text is a paragraph.
-        level = indent // 4
-        content = line[level * 4:]
+        # Indented code blocks are currently not implemented. Leading spaces are
+        # preserved as paragraph text instead of being mapped to QTextBlock indentation.
         return BlockToken(
             type=BlockType.PARAGRAPH,
-            level=level,
-            children=self._parse_inline(content),
+            children=self._parse_inline(line),
         )
 
     def _parse_inline(self, text: str) -> list[InlineNode]:

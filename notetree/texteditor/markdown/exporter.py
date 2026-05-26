@@ -15,9 +15,11 @@ TagStack = list[Tag]
 
 class MarkdownExporter:
     """
-    Convert the specified range of the QTextDocument to Markdown.
-    This function builds a minimal Markdown document that includes headings,
-    unordered lists, inline styling, indent and font sizes.
+    Convert the specified QTextDocument range to NoteTree Markdown.
+
+    The exporter writes the Markdown constructs currently supported by
+    NoteTree's TextEditor, including headings, unordered lists, inline
+    styling, links, horizontal rules and supported font-size spans.
     """
     def __init__(self, document: QTextDocument, range: QTextCursor = None):
         self.document = document
@@ -80,8 +82,7 @@ class MarkdownExporter:
             return f'{"#" * heading_level} {block.text()}'
         else:
             # Four spaces per indent level
-            indent = '    ' * block_format.indent()
-            prefix = f'{indent}'
+            prefix = ''
 
         # Resolve inline formats to be in the right order
         fragments = InlineFormatResolver(block, self._start, self._end).fragments
