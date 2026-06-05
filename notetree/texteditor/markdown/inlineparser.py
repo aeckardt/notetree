@@ -47,11 +47,11 @@ class ScopeMarker:
     into the tree. Alternatively, the marker will be disregarded as text.
     """
     class Type(IntEnum):
-        # The enum integers are their priority
+        # The integer values are also their priority
         # Lower integer = higher binding priority when resolving the stack
-        html_tag = 0  # '<ins>', <span>, ...
-        bracket = 1   # '![', '[' or ']'
-        asterisk = 2  # '*', '**', '***', ...
+        HTML_TAG = 0  # '<ins>', <span>, ...
+        BRACKET = 1   # '![', '[' or ']'
+        ASTERISK = 2  # '*', '**', '***', ...
     type: Type
     marker: Union[DelimiterRun, InlineHtmlTag]
     can_open: bool
@@ -119,7 +119,7 @@ class MarkdownInlineParser:
                     #  2) (prev_char is not punctuation OR next_char is whitespace or punctuation)
                     right_flanking = (not prev_is_ws) and (not prev_is_p or next_is_ws or next_is_p or next_is_to)
 
-                    marker = ScopeMarker(MarkerType.asterisk, DelimiterRun('*' * count), left_flanking, right_flanking)
+                    marker = ScopeMarker(MarkerType.ASTERISK, DelimiterRun('*' * count), left_flanking, right_flanking)
                     if right_flanking:
                         # Get matching marker node from stack
                         open_marker = self.find_opening_marker(marker)
@@ -144,7 +144,7 @@ class MarkdownInlineParser:
                     if self.pos + 1 < self.length and self.input[self.pos + 1] == '[':
                         # '![' found at pos => push ScopeMarker to stack
                         self.flush_text()
-                        marker = ScopeMarker(MarkerType.bracket, DelimiterRun('!['), True, False)
+                        marker = ScopeMarker(MarkerType.BRACKET, DelimiterRun('!['), True, False)
                         self.push_scope_marker(marker)
                         self.pos += 2
                     else:
@@ -154,12 +154,12 @@ class MarkdownInlineParser:
 
                 case '[':
                     self.flush_text()
-                    marker = ScopeMarker(MarkerType.bracket, DelimiterRun(ch), True, False)
+                    marker = ScopeMarker(MarkerType.BRACKET, DelimiterRun(ch), True, False)
                     self.push_scope_marker(marker)
                     self.pos += 1
                 case ']':
                     self.flush_text()
-                    marker = ScopeMarker(MarkerType.bracket, DelimiterRun(ch), False, True)
+                    marker = ScopeMarker(MarkerType.BRACKET, DelimiterRun(ch), False, True)
                     self.pos += 1
 
                     # Get matching marker node from stack
@@ -250,7 +250,7 @@ class MarkdownInlineParser:
         while index >= 0:
             open_marker = self.open_scope_stack[index]
             if open_marker.type == marker.type:
-                if marker.type == ScopeMarker.Type.html_tag:
+                if marker.type == ScopeMarker.Type.HTML_TAG:
                     open_tag = open_marker.marker.tag
                     close_tag = marker.marker.tag
                     if open_tag == close_tag:
@@ -269,7 +269,7 @@ class MarkdownInlineParser:
         while True:
             popped_marker = self.pop_scope_marker()
             if popped_marker.type == marker.type:
-                if marker.type == ScopeMarker.Type.html_tag:
+                if marker.type == ScopeMarker.Type.HTML_TAG:
                     popped_tag = popped_marker.marker.tag
                     close_tag = marker.marker.tag
                     if popped_tag == close_tag:
@@ -400,7 +400,7 @@ class MarkdownInlineParser:
                 # Advance position for parser
                 content = self.input[self.pos:fwd_pos+1]
                 self.pos = fwd_pos + 1
-                return ScopeMarker(Type.html_tag, InlineHtmlTag(content, tag_name), False, True)
+                return ScopeMarker(Type.HTML_TAG, InlineHtmlTag(content, tag_name), False, True)
             else:
                 # Condition for valid closing tag violated
                 # '>' expected, but not found
@@ -466,12 +466,12 @@ class MarkdownInlineParser:
                     # Valid self closing tag found!
                     content = self.input[self.pos:fwd_pos+2]
                     self.pos = fwd_pos + 2
-                    return ScopeMarker(Type.html_tag, InlineHtmlTag(content, tag_name, attrs), False, False)
+                    return ScopeMarker(Type.HTML_TAG, InlineHtmlTag(content, tag_name, attrs), False, False)
             elif ch == '>':
                 # Closing tag found
                 content = self.input[self.pos:fwd_pos+1]
                 self.pos = fwd_pos + 1
-                return ScopeMarker(Type.html_tag, InlineHtmlTag(content, tag_name, attrs), True, False)
+                return ScopeMarker(Type.HTML_TAG, InlineHtmlTag(content, tag_name, attrs), True, False)
             else:
                 # Other characters are not allowed here:
                 return None

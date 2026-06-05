@@ -117,7 +117,8 @@ default_font_pointsize = None
 def is_markdown_strong(char_fmt: QTextCharFormat) -> bool:
     return int(char_fmt.fontWeight()) >= int(STRONG_FONT_WEIGHT)
 
-def default_font_weight(block: QTextBlock):
+def block_default_font_weight(block: QTextBlock) -> QFont.Weight:
+    """Return the default font weight for the block's semantic type."""
     if block.blockFormat().headingLevel() > 0:
         return HEADING_FONT_WEIGHT
     return NORMAL_FONT_WEIGHT

@@ -328,13 +328,13 @@ class TextEditor(QTextEdit):
         # Without a selection, formatting actions change the current typing format.
         if not cursor.hasSelection():
             fmt = QTextCharFormat()
-            fmt.setFontWeight(default_font_weight(cursor.block()))
+            fmt.setFontWeight(block_default_font_weight(cursor.block()))
             self._merge_format_on_selection(fmt)
             return
 
-        # Change selected text
+        # Change text under cursor
         def clear_strong_modifier(block: QTextBlock, char_fmt: QTextCharFormat) -> QTextCharFormat:
-            base_weight = default_font_weight(block)
+            base_weight = block_default_font_weight(block)
             if is_markdown_strong(char_fmt):
                 char_fmt.setFontWeight(base_weight)
             return char_fmt
@@ -483,7 +483,7 @@ class TextEditor(QTextEdit):
         """
         Indent/Unindent affects selected list items.
         Non-list paragraphs inside the selection are ignored.
-        If no selected block is a list item, the action does nothing or is disabled.
+        If no selected block is a list item, the action does nothing.
         """
         cursor = self.textCursor()
         blocks = self._selected_blocks(cursor)

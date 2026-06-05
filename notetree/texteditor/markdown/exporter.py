@@ -128,6 +128,9 @@ class MarkdownExporter:
 
         # Detect leading/trailing spaces
         leading_ws = re.match(r'^\s*', selected_text).group()
+        if len(leading_ws) == len(selected_text):
+            # Return, if the fragment only consists of whitespace
+            return leading_ws, remaining
         trailing_ws = re.search(r'\s*$', selected_text).group()
         core_text = selected_text[len(leading_ws):len(selected_text)-len(trailing_ws) or None]
 

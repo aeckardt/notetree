@@ -21,9 +21,9 @@ class DocumentTreeWidget(QWidget):
 
     selection_changed = pyqtSignal(QModelIndex, QModelIndex)
 
-    def __init__(self, title: str, use_groupbox: bool = False,
+    def __init__(self, title: str, use_groupbox: bool=False,
                  flags: list[Flag] = [Flag.ConfirmationPrompt],
-                 model: DocumentTreeModel = None, parent = None):
+                 model: DocumentTreeModel | None = None, parent=None):
         super().__init__(parent)
 
         self.buttons = []
@@ -79,6 +79,9 @@ class DocumentTreeWidget(QWidget):
         self.treeview.setDropIndicatorShown(True)
         self.treeview.setDefaultDropAction(Qt.DropAction.MoveAction)
         self.treeview.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+
+        self.treeview.expanded.connect(self._on_item_expanded)
+        self.treeview.collapsed.connect(self._on_item_collapsed)
 
         # Override behavior for double click on view
         self.treeview.mouseDoubleClickEvent = self._treeview_mouse_doubleclick_event
@@ -191,20 +194,6 @@ class DocumentTreeWidget(QWidget):
         self._update_enabled_status()
 
     @pyqtSlot()
-    def _on_model_loaded(self):
-        # Reset selected index
-        self.selected_index = QModelIndex()
-
-        # Expand all nodes with the 'expanded' flag
-        def maybe_expand(index: QModelIndex):
-            node = index.internalPointer()
-            self.treeview.setExpanded(index, node.is_expanded)
-        model: DocumentTreeModel = self.treeview.model()
-        model.iterate(maybe_expand)
-
-        self._update_enabled_status()
-
-    @pyqtSlot()
     def _on_edit_clicked(self):
         self.edit_row()
         self._update_enabled_status()
@@ -255,6 +244,36 @@ class DocumentTreeWidget(QWidget):
             self._update_enabled_status()
 
             self.selection_changed.emit(self.selected_index, deselectedIndex)
+
+    @pyqtSlot()
+    def _on_model_loaded(self):
+        """
+        Reset the expansion state for the tree nodes.
+
+        This currently only works if you save the project with some other changes
+        - other than the expansion state of some nodes.
+        """
+        # Reset selected index
+        self.selected_index = QModelIndex()
+
+        # Expand all nodes with the 'expanded' flag
+        def maybe_expand(index: QModelIndex):
+            node = index.internalPointer()
+            self.treeview.setExpanded(index, node.is_expanded)
+        model: DocumentTreeModel = self.treeview.model()
+        model.iterate(maybe_expand)
+
+        self._update_enabled_status()
+
+    @pyqtSlot(QModelIndex)
+    def _on_item_expanded(self, index: QModelIndex):
+        node: DocumentNode = index.internalPointer()
+        node.is_expanded = True
+
+    @pyqtSlot(QModelIndex)
+    def _on_item_collapsed(self, index: QModelIndex):
+        node: DocumentNode = index.internalPointer()
+        node.is_expanded = False
 
     def _row_count(self):
         if self.model is None:

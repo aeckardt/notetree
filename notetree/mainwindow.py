@@ -290,7 +290,7 @@ class MainWindow(QMainWindow):
 
         # If a file has been selected, the file path should contain at least one character
         if len(file_path) > 0:
-            self._open_file(file_path)
+            self._load_from_file(file_path)
 
     @pyqtSlot(int)
     def _on_open_recent(self, index: int):
@@ -301,7 +301,7 @@ class MainWindow(QMainWindow):
 
         sender: QAction = self.recent_file_actions[index]
         try:
-            self._open_file(sender.data())
+            self._load_from_file(sender.data())
         except FileNotFoundError:
             show_error_msg(self.tr("The file could not be found."), self)
 
@@ -336,13 +336,10 @@ class MainWindow(QMainWindow):
     # 4. Open / Save file
     # -----------------------------------------------
 
-    def _open_file(self, filename):
+    def _load_from_file(self, filename):
         if filename == self.session.filename:
             return
 
-        self._load_from_file(filename)
-
-    def _load_from_file(self, filename):
         # Load project contents from file
         try:
             self.session.load_from_file(filename)
